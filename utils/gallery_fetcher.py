@@ -40,3 +40,9 @@ def fetch_redgifs(limit):
             'title': item.get('title', 'RedGif')
         })
     return {'status': 'ok', 'results': results}
+# Thêm vào cuối file gallery_fetcher.py
+
+def fetch_media(keyword: str):
+    # Tạm thời mặc định trả về redgifs nếu có từ "gif", còn lại là xvideos
+    source = 'redgifs' if 'gif' in keyword.lower() else 'xvideos'
+    return fetch_gallery(source)
