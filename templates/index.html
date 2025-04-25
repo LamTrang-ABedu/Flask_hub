@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Flask Hub{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <nav>
-    <a href="/">Profile Faker</a> |
-    <a href="/media">Media Gallery</a> |
-    <a href="/universal-downloader">Downloader</a> |
+  <div class="sidebar" id="sidebar">
+    <a href="/">Profile Faker</a>
+    <a href="/media">Media Gallery</a>
+    <a href="/universal-downloader">Downloader</a>
     <a href="/telegram">Telegram</a>
-  </nav>
-  <hr>
-  {% block content %}{% endblock %}
+    <a href="/bin">BIN Explorer</a>
+  </div>
+
+  <div class="topbar">
+    <span class="menu-icon" onclick="toggleSidebar()">☰ Menu</span>
+    <span class="title">{% block title %}Flask Hub{% endblock %}</span>
+  </div>
+
+  <div class="main" onclick="closeSidebar()">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>
