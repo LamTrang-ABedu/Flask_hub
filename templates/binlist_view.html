@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+{% block title %}BIN Explorer{% endblock %}
+{% block content %}
+<h2>BIN Explorer</h2>
+<div style="margin-bottom: 16px;">
+  <label for="countrySelect">Country:</label>
+  <select id="countrySelect" onchange="filterBINs()"></select>
+  <button onclick="exportJSON()">Export JSON</button>
+</div>
+<table id="binTable">
+  <thead>
+    <tr><th>BIN</th><th>Brand</th><th>Bank</th><th>Type</th><th>Country</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<script src="{{ url_for('static', filename='js/bin_explorer.js') }}"></script>
+{% endblock %}
