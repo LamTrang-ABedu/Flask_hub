@@ -21,9 +21,15 @@ def fetch_xvideos(limit):
         a = card.find_parent('a')
         href = a['href']
         video_link = 'https://www.xvideos.com' + href
-        thumb = a.find('img')['data-src'] if a.find('img') else ''
+        img = a.find('img')
+        thumb = img['data-src'] if img and 'data-src' in img.attrs else ''
         title = a.get('title', '').strip()
-        results.append({'video': video_link, 'thumb': thumb, 'title': title})
+        results.append({
+            'type': 'video',
+            'video': video_link,
+            'thumb': thumb,
+            'title': title
+        })
     return {'status': 'ok', 'results': results}
 
 def fetch_redgifs(limit):
@@ -35,14 +41,13 @@ def fetch_redgifs(limit):
     results = []
     for item in data:
         results.append({
+            'type': 'video',
             'video': item['urls']['hd'],
             'thumb': item['urls']['poster'],
             'title': item.get('title', 'RedGif')
         })
     return {'status': 'ok', 'results': results}
-# Thêm vào cuối file gallery_fetcher.py
 
 def fetch_media(keyword: str):
-    # Tạm thời mặc định trả về redgifs nếu có từ "gif", còn lại là xvideos
     source = 'redgifs' if 'gif' in keyword.lower() else 'xvideos'
     return fetch_gallery(source)
