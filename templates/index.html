@@ -17,7 +17,7 @@
 
   <div class="topbar">
     <span class="menu-icon" onclick="toggleSidebar()">☰ Menu</span>
-    <span class="title">{% block title %}Flask Hub{% endblock %}</span>
+    <span class="title">{{ self.title() }}</span>
   </div>
 
   <div class="main" onclick="closeSidebar()">
