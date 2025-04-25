@@ -7,23 +7,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <nav class="navbar">
-    <button class="menu-toggle" onclick="toggleMenu()">☰ Menu</button>
-    <ul id="nav-links" class="nav-links">
-      <li><a href="/">Profile Faker</a></li>
-      <li><a href="/media">Media Gallery</a></li>
-      <li><a href="/universal-downloader">Downloader</a></li>
-      <li><a href="/telegram">Telegram</a></li>
-    </ul>
+  <nav>
+    <a href="/">Profile Faker</a> |
+    <a href="/media">Media Gallery</a> |
+    <a href="/universal-downloader">Downloader</a> |
+    <a href="/telegram">Telegram</a>
   </nav>
-  <div class="content">
-    {% block content %}{% endblock %}
-  </div>
-  <script>
-    function toggleMenu() {
-      const navLinks = document.getElementById('nav-links');
-      navLinks.classList.toggle('show');
-    }
-  </script>
+  <hr>
+  {% block content %}{% endblock %}
 </body>
 </html>
