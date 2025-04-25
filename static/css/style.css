@@ -45,3 +45,21 @@ body {
     padding: 30px 50px;
   }
 }
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+
+.media-card {
+  background: #f3f3f3;
+  padding: 8px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.media-card img {
+  width: 100%;
+  border-radius: 4px;
+}
