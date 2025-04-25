@@ -1,2 +1,37 @@
-{% extends 'index.html' %}
-{% block content %}<p>Media Gallery Here</p>{% endblock %}
+{% extends "index.html" %}
+{% block title %}Media Gallery{% endblock %}
+{% block content %}
+<h2>Media Gallery (X)</h2>
+<div style="margin-bottom: 20px; display: flex; gap: 10px;">
+  <input type="text" id="searchInput" placeholder="Enter keyword or @username" style="flex: 1; padding: 8px;">
+  <button onclick="searchMedia()" style="width: 100px;">Search</button>
+</div>
+<div id="mediaContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;"></div>
+<script>
+async function searchMedia() {
+  const keyword = document.getElementById('searchInput').value.trim();
+  const container = document.getElementById('mediaContainer');
+  container.innerHTML = '';
+  if (!keyword) return alert('Please enter a keyword or @username.');
+  const res = await fetch(`/api/media?keyword=${encodeURIComponent(keyword)}`);
+  const data = await res.json();
+  if (data.status !== 'ok') {
+    container.innerHTML = '<p style="color:red">Failed to fetch media.</p>';
+    return;
+  }
+  for (const item of data.results) {
+    const card = document.createElement('div');
+    card.style = 'border:1px solid #ccc;padding:10px;border-radius:8px;background:#fafafa';
+    card.innerHTML = `<p><strong>@${item.username}</strong> <em>${item.date}</em></p><p>${item.text}</p>`;
+    item.media.forEach(url => {
+      if (url.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        card.innerHTML += `<img src="${url}" style="width:100%;margin-top:8px;border-radius:4px;">`;
+      } else if (url.match(/\.mp4$/i)) {
+        card.innerHTML += `<video src="${url}" controls style="width:100%;margin-top:8px;"></video>`;
+      }
+    });
+    container.appendChild(card);
+  }
+}
+</script>
+{% endblock %}
