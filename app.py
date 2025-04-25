@@ -37,4 +37,4 @@ def api_universal_download():
     return jsonify(download_from_url(url))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=10000)
