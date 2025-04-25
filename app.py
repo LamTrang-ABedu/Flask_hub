@@ -21,10 +21,10 @@ def media_gallery_page():
 
 @app.route('/api/media')
 def api_media():
-    keyword = request.args.get('keyword', '')
-    if not keyword:
-        return jsonify({'status': 'error', 'message': 'Missing keyword'}), 400
-    return jsonify(fetch_media(keyword))
+    source = request.args.get('source', '')
+    if not source:
+        return jsonify({'status': 'error', 'message': 'Missing source'}), 400
+    return jsonify(fetch_media(source))
 
 @app.route('/universal-downloader')
 def universal_downloader_page():
