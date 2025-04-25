@@ -1,3 +1,4 @@
+
 body {
   font-family: Arial, sans-serif;
   padding: 0;
@@ -10,12 +11,14 @@ nav {
   background-color: #333;
   color: #fff;
   padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  position: relative;
 }
 nav .menu-toggle {
-  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2em;
+  cursor: pointer;
 }
 nav ul {
   list-style: none;
@@ -24,35 +27,26 @@ nav ul {
   display: flex;
   gap: 1rem;
 }
-nav a {
+nav ul li a {
   color: #fff;
   text-decoration: none;
+}
+nav ul.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  background-color: #444;
+  flex-direction: column;
+  display: none;
+  padding: 10px;
+  border-radius: 5px;
+}
+nav ul.dropdown.show {
+  display: flex;
 }
 .content {
   padding: 20px;
   flex: 1;
-}
-@media (max-width: 768px) {
-  nav {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  nav ul {
-    flex-direction: column;
-    width: 100%;
-    display: none;
-  }
-  nav ul.show {
-    display: flex;
-  }
-  nav .menu-toggle {
-    display: block;
-    background: none;
-    color: white;
-    font-size: 1.2em;
-    border: none;
-    margin-bottom: 10px;
-  }
 }
 .input-row {
   display: flex;
@@ -71,4 +65,14 @@ nav a {
 .input-button {
   width: 100px;
   padding: 10px;
+}
+@media (max-width: 768px) {
+  nav ul {
+    display: none;
+  }
+  nav ul.dropdown {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
 }
