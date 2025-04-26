@@ -1,30 +1,38 @@
 {% extends "index.html" %}
-
-{% block title %}Profile Faker{% endblock %}
-
+{% block title %}Fake Profile Generator{% endblock %}
 {% block content %}
-<h2>Profile Faker</h2>
-
-{% if profile %}
-  <div class="profile-card">
-    <p><strong>Name:</strong> {{ profile.name }}</p>
-    <p><strong>Gender:</strong> {{ profile.gender }}</p>
-    <p><strong>Date of Birth:</strong> {{ profile.dob }}</p>
-    <p><strong>Email:</strong> {{ profile.email }}</p>
-    <p><strong>Phone:</strong> {{ profile.phone }}</p>
-    <p><strong>Street:</strong> {{ profile.street }}</p>
-    <p><strong>City:</strong> {{ profile.city }}</p>
-    <p><strong>Country:</strong> {{ profile.country }}</p>
-    <p><strong>ZIP:</strong> {{ profile.zip_code }}</p>
-    <!-- Hiển thị Parent nếu có -->
-    {% if profile.parent %}
-      <h3>Parent Info:</h3>
-      <p><strong>Parent Name:</strong> {{ profile.parent.first_name }} {{ profile.parent.last_name }}</p>
-      <p><strong>Parent Email:</strong> {{ profile.parent.email }}</p>
-    {% endif %}
-  </div>
-{% else %}
-  <p>No profile loaded yet.</p>
-{% endif %}
-
+<h2>Fake Profile Generator</h2>
+<div class="input-row">
+  <input class="input-email" type="email" id="customEmail" placeholder="Enter custom email">
+  <select class="input-locale" id="localeSelect">
+    <option value="en_US">United States</option>
+    <option value="tr_TR">Turkey</option>
+  </select>
+  <button class="input-button" onclick="generateProfile()">Generate</button>
+</div>
+<table id="profileTable" style="display:none"><tbody></tbody></table>
+<script>
+async function generateProfile() {
+  const locale = document.getElementById('localeSelect').value;
+  const email = document.getElementById('customEmail').value.trim();
+  const res = await fetch(`/api/profile?locale=${locale}`);
+  const data = await res.json();
+  if (email) data.email = email;
+  const tbody = document.querySelector('#profileTable tbody');
+  tbody.innerHTML = '';
+  const rows = [
+    ['First Name', data.first_name], ['Last Name', data.last_name], ['Full Name', data.name],
+    ['Gender', data.gender], ['Birthday', data.dob], ['Email', data.email],
+    ['Cell Phone', data.cell_phone], ['Primary Phone', data.phone], ['SSN', data.ssn],
+    ['Street', data.street], ['City', data.city], ['Country', data.country], ['Zip Code', data.zip_code],
+    ['Parent First Name', data.parent.first_name], ['Parent Last Name', data.parent.last_name], ['Parent Email', data.parent.email]
+  ];
+  rows.forEach(([label, value]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<th>${label}</th><td>${value}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('profileTable').style.display = 'table';
+}
+</script>
 {% endblock %}

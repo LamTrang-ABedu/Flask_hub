@@ -27,7 +27,7 @@ async function loadGallery() {
           <img data-src="${item.thumb}" class="lozad" alt="${item.title}" />
         </a>
         <p>${item.title}</p>
-        <a href="${item.video}" target="_blank" class="watch-btn">Watch Video</a>
+        <a href="/redirect-to?url=${encodeURIComponent(item.video)}" target="_blank">Watch Video</a>
       `;
     }
     grid.appendChild(card);

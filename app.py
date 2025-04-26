@@ -6,20 +6,16 @@ from utils.telethon_helper import fetch_telegram_media
 from utils.profile_proxy import generate_profile_proxy
 app = Flask(__name__)
 
-# @app.route('/')
-# def profile_faker_page():
-#     return render_template('profile_faker.html')
+@app.route('/')
+def profile_faker_page():
+    return render_template('profile_faker.html')
 
 @app.route('/api/profile')
 def api_profile():
     locale = request.args.get('locale', 'en_US')
-    email = request.args.get('email', '').strip()
     profile_data = generate_profile_proxy({'locale': locale})
-
-    # Nếu có custom email từ client thì gán lại
-    if email:
-        profile_data['email'] = email
-    return render_template('profile_faker.html', profile=profile_data)
+    # return jsonify(generate_profile(locale))
+    return jsonify(profile_data)
 
 @app.route('/media')
 def media_gallery_page():
