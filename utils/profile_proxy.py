@@ -1,5 +1,14 @@
 import requests
+import os
 
+import socket
+
+def is_localhost():
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
+    return ip.startswith("127.") or ip == "localhost"
+
+IS_LOCAL = is_localhost()
 PROFILE_SERVICES = [
     "https://profile-faker-service.onrender.com/api/profile",
     # "https://profile-faker-service-vercel.vercel.app/api/profile",
@@ -10,7 +19,12 @@ def generate_profile_proxy(locale="en_US"):
     print(f"generate_profile_proxy: {locale}")
     for url in PROFILE_SERVICES:
         try:
-            response = requests.get(url, params=locale, timeout=5, verify=False)
+            if IS_LOCAL:
+                # Nếu đang chạy trên localhost, không cần kiểm tra SSL
+                response = requests.get(url, params=locale, timeout=5, verify=False)
+            else:                # Kiểm tra SSL nếu không phải localhost
+                response = requests.get(url, params=locale, timeout=5)
+             
             if response.status_code == 200:
                 print(f"generate_profile_proxy: {locale}")
                 data = response.json()
