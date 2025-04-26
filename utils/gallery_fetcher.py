@@ -49,5 +49,10 @@ def fetch_redgifs(limit):
     return {'status': 'ok', 'results': results}
 
 def fetch_media(keyword: str):
-    source = 'redgifs' if 'gif' in keyword.lower() else 'xvideos'
-    return fetch_gallery(source)
+    keyword = keyword.lower()
+    if keyword == 'xvideos':
+        return fetch_gallery('xvideos')
+    elif keyword == 'redgifs':
+        return fetch_gallery('redgifs')
+    else:
+        return {'status': 'error', 'message': 'Invalid source'}
