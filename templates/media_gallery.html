@@ -1,16 +1,39 @@
 {% extends "index.html" %}
 {% block title %}Media Gallery{% endblock %}
 {% block content %}
-<h2>Adult Media Gallery</h2>
-<div class="media-source-bar">
-  <label for="sourceSelect">Choose Source:</label>
-  <select id="sourceSelect" onchange="loadGallery()">
-    <option value="">-- Select --</option>
-    <option value="xvideos">Xvideos</option>
-    <option value="redgifs">RedGifs</option>
-  </select>
-</div>
+<h2>Media Gallery (Google Drive Proxy)</h2>
+<select id="sourceSelect" onchange="loadGallery()">
+  <option value="">-- Select Source --</option>
+  <option value="redgifs">RedGifs</option>
+  <option value="xvideos">Xvideos</option>
+</select>
+
 <div id="mediaGrid" class="media-grid"></div>
-<script src="{{ url_for('static', filename='js/media_sources.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
+
+<script>
+async function loadGallery() {
+  const source = document.getElementById('sourceSelect').value;
+  if (!source) return;
+  const res = await fetch(`/api/gallery?source=${source}`);
+  const data = await res.json();
+  const grid = document.getElementById('mediaGrid');
+  grid.innerHTML = '';
+
+  if (data.status !== 'ok') {
+    grid.innerHTML = '<p>Failed to load.</p>';
+    return;
+  }
+
+  data.results.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'media-card';
+    card.innerHTML = `
+      <img src="${item.thumb}" alt="${item.title}" loading="lazy">
+      <p>${item.title}</p>
+      <a href="${item.video}" target="_blank">Watch</a>
+    `;
+    grid.appendChild(card);
+  });
+}
+</script>
 {% endblock %}

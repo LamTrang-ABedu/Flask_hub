@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 from flask import Flask, render_template, request, jsonify
 from utils.profile_faker import generate_profile
 from utils.gallery_fetcher import fetch_media
@@ -7,7 +8,18 @@ from utils.media_downloader import download_from_url
 from utils.telethon_helper import fetch_telegram_media
 from utils.profile_proxy import generate_profile_proxy
 from utils.bin_fetcher import generate_bin_cache
+from utils.account_fetcher import fetch_accounts
+# --- thêm mới ---
+from utils.proxy_fetcher import background_worker
+from utils.keepalive_bot import start_keepalive_bot
+from utils.media_crawler import crawl_and_upload
+
+start_keepalive_bot()
+
 app = Flask(__name__)
+
+# Start proxy fetcher bot in background
+threading.Thread(target=background_worker, daemon=True).start()
 
 @app.route('/')
 def profile_faker_page():
@@ -16,9 +28,9 @@ def profile_faker_page():
 @app.route('/api/profile')
 def api_profile():
     locale = request.args.get('locale', 'en_US')
-    profile_data = generate_profile_proxy({'locale': locale})
-    # return jsonify(generate_profile(locale))
-    return jsonify(profile_data)
+    # profile_data = generate_profile_proxy({'locale': locale})
+    return jsonify(generate_profile(locale))
+    # return jsonify(profile_data)
 
 @app.route('/media')
 def media_gallery_page():
@@ -77,5 +89,40 @@ def api_refresh_bin():
         return jsonify({'status': 'ok', 'message': 'BIN cache refreshed successfully!'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
+    
+# Route account fetcher page
+@app.route('/account-fetcher')
+def account_fetcher_page():
+    return render_template('account_fetcher.html')
+
+# API trả danh sách account
+@app.route('/api/account-fetcher')
+def api_account_fetcher():
+    try:
+        accounts = fetch_accounts()
+        return jsonify({'status': 'ok', 'accounts': accounts})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+    
+@app.route('/proxy')
+def proxy_fetcher():
+    return render_template('proxy_fetcher.html')
+
+@app.route('/api/proxylist')
+def api_proxylist():
+    proxy_type = request.args.get('type', '').lower()
+    country = request.args.get('country', '').upper()
+    try:
+        with open('static/cache/proxy_cache.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        results = data
+        if proxy_type:
+            results = [p for p in results if p['type'].lower() == proxy_type]
+        if country:
+            results = [p for p in results if p['country'].upper() == country]
+        return jsonify({'status': 'ok', 'results': results})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)

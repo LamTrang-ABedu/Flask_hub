@@ -1,0 +1,55 @@
+{% extends "index.html" %}
+{% block title %}Proxy Fetcher{% endblock %}
+
+{% block content %}
+<h2>Proxy Fetcher</h2>
+<div class="input-row">
+  <select id="typeSelect">
+    <option value="">All Types</option>
+    <option value="residential">Residential</option>
+    <option value="datacenter">Datacenter</option>
+  </select>
+
+  <input id="countryInput" type="text" placeholder="Enter Country Code (e.g., US)">
+  <button onclick="loadProxyList()">Search</button>
+</div>
+
+<table id="proxyTable" style="display:none; margin-top:20px">
+  <thead>
+    <tr><th>IP</th><th>Port</th><th>Provider</th><th>Country</th><th>Expire</th><th>Action</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+async function loadProxyList() {
+  const type = document.getElementById('typeSelect').value;
+  const country = document.getElementById('countryInput').value.trim();
+  const res = await fetch(`/api/proxylist?type=${type}&country=${country}`);
+  const data = await res.json();
+  const tbody = document.querySelector('#proxyTable tbody');
+  tbody.innerHTML = '';
+
+  if (data.status === 'ok') {
+    data.results.forEach(proxy => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${proxy.ip}</td>
+        <td>${proxy.port}</td>
+        <td>${proxy.provider}</td>
+        <td>${proxy.country}</td>
+        <td>${proxy.expire}</td>
+        <td><button onclick='copyProxy("${proxy.ip}:${proxy.port}")'>Copy</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('proxyTable').style.display = 'table';
+  }
+}
+
+function copyProxy(text) {
+  navigator.clipboard.writeText(text);
+  alert('Copied: ' + text);
+}
+</script>
+{% endblock %}

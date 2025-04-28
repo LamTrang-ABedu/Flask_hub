@@ -21,6 +21,7 @@ def generate_profile(locale='en_US'):
         'ssn': fake.ssn() if hasattr(fake, 'ssn') else 'N/A',
         'street': fake.street_address(),
         'city': fake.city(),
+        'state': fake.state(),
         'country': fake.current_country() if hasattr(fake, 'current_country') else 'N/A',
         'zip_code': fake.postcode(),
         'parent': {
