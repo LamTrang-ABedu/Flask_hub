@@ -63,6 +63,7 @@ def crawl_and_upload(source):
     save_gallery_cache(source, results)
 
 def upload_media(url, filename):
+    print(f"[Info] Uploading media from {url}...")
     try:
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             r = requests.get(url, stream=True)
@@ -79,6 +80,7 @@ def upload_media(url, filename):
         return ''
 
 def save_gallery_cache(source, media_list):
+    print(f"[Success] Saving {len(media_list)} media to cache for {source}")
     if not os.path.exists('static/cache'):
         os.makedirs('static/cache')
 
@@ -89,7 +91,22 @@ def save_gallery_cache(source, media_list):
         cache = {}
 
     cache[source] = media_list
+    print(f"[Success] Saved {len(media_list)} media to cache for {source}")
 
     with open(CACHE_FILE, 'w', encoding='utf-8') as f:
         json.dump(cache, f, indent=2, ensure_ascii=False)
     print(f"[Success] Saved {len(media_list)} media to cache for {source}")
+
+def fetch_media(keyword):
+    try:
+        if not os.path.exists(CACHE_FILE):
+            return []
+        with open(CACHE_FILE, 'r', encoding='utf-8') as f:
+            cache = json.load(f)
+        
+        # Lọc các media theo từ khóa (keyword như 'xvideos', 'redgifs')
+        filtered = [item for item in cache if item.get('source', '').lower() == keyword.lower()]
+        return filtered
+    except Exception as e:
+        print(f"[Error] Fetch media failed: {e}")
+        return []

@@ -1,0 +1,28 @@
+{% extends "index.html" %}
+{% block title %}HopeHub - Media Gallery{% endblock %}
+{% block content %}
+<h2>HopeHub Media Gallery</h2>
+
+<div class="media-source-bar">
+  <label for="sourceSelect">Select Source:</label>
+  <select id="sourceSelect" onchange="loadGallery()">
+    <option value="">-- Select --</option>
+    <option value="xvideos">Xvideos</option>
+    <option value="redgifs">RedGifs</option>
+    <option value="pornhub">Pornhub</option>
+    <option value="instagram">Instagram</option>
+    <option value="telegram">Telegram</option>
+  </select>
+</div>
+
+<div id="mediaGrid" class="media-grid"></div>
+
+<!-- Modal for Fullscreen Preview -->
+<div id="modalViewer" class="modal-viewer" onclick="closeViewer()">
+  <span class="close">&times;</span>
+  <img class="modal-content" id="modalImage" />
+  <video class="modal-content" id="modalVideo" controls style="display:none;"></video>
+</div>
+
+<script src="{{ url_for('static', filename='js/media_sources.js') }}"></script>
+{% endblock %}

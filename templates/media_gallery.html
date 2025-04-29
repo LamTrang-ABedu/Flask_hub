@@ -14,7 +14,7 @@
 async function loadGallery() {
   const source = document.getElementById('sourceSelect').value;
   if (!source) return;
-  const res = await fetch(`/api/gallery?source=${source}`);
+  const res = await fetch(`/api/media?source=${source}`);
   const data = await res.json();
   const grid = document.getElementById('mediaGrid');
   grid.innerHTML = '';

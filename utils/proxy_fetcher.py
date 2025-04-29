@@ -1,141 +1,89 @@
-# Proxy Fetcher V2.5 Full Source
-
 import requests
-import json
-import random
-import time
 import threading
+import json
+import time
+import os
+from bs4 import BeautifulSoup
 
-PROFILE_FAKER_URLS = [
-    "https://profile-faker-service.onrender.com/api/profile",
-    "https://09ef5a9c-b639-48b8-9bb1-d120097aef06-00-2ub7tkprj1vdf.sisko.replit.dev/api/profile"
+CACHE_FILE = 'static/cache/proxy_cache.json'
+ALIVE_FILE = 'static/cache/proxy_alive.json'
+
+# Các nguồn public proxy miễn phí
+SOURCES = [
+    "https://www.proxy-list.download/api/v1/get?type=https",
+    "https://www.proxy-list.download/api/v1/get?type=http",
+    "https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt",
+    "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
+    "https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt",
 ]
 
-BIN_FETCHER_URLS = [
-    "https://bin-fetcher-service.onrender.com/api/binlist",
-    "https://2a850f82-d954-4117-9138-a237f6a53c53-00-2ujm3k5bp3tna.sisko.replit.dev/api/binlist"
-]
-
-TRIAL_SOURCES = [
-    {"service": "Geonode", "trial_url": "https://geonode.com/free-trial", "auto_signup": True},
-    {"service": "PacketStream", "trial_url": "https://packetstream.io/#buy", "auto_signup": True},
-    {"service": "Oxylabs", "trial_url": "https://oxylabs.io/", "auto_signup": False},
-    {"service": "SmartProxy", "trial_url": "https://smartproxy.com", "auto_signup": False},
-    {"service": "BrightData", "trial_url": "https://brightdata.com", "auto_signup": False},
-    {"service": "ProxyMesh", "trial_url": "https://proxymesh.com", "auto_signup": False},
-    {"service": "StormProxies", "trial_url": "https://stormproxies.com", "auto_signup": False},
-    {"service": "NetNut.io", "trial_url": "https://netnut.io", "auto_signup": False},
-    {"service": "ProxyRack", "trial_url": "https://proxyrack.com", "auto_signup": False},
-    {"service": "VPN Unlimited", "trial_url": "https://www.vpnunlimitedapp.com/", "auto_signup": False},
-    {"service": "NordVPN", "trial_url": "https://nordvpn.com", "auto_signup": False},
-    {"service": "ExpressVPN", "trial_url": "https://expressvpn.com", "auto_signup": False},
-    {"service": "Surfshark", "trial_url": "https://surfshark.com", "auto_signup": False},
-    {"service": "VeePN", "trial_url": "https://veepn.com", "auto_signup": False},
-    {"service": "TorGuard", "trial_url": "https://torguard.net", "auto_signup": False},
-    {"service": "Hide.me VPN", "trial_url": "https://hide.me", "auto_signup": False},
-    {"service": "PrivadoVPN", "trial_url": "https://privadovpn.com", "auto_signup": False}
-    # ... và còn nhiều dịch vụ khác trong danh sách
-]
-
-PROXY_CACHE_FILE = "proxy_cache.json"
-ALIVE_CACHE_FILE = "proxy_alive.json"
-
-# Fetch fake profile
-def fetch_profile():
-    for url in PROFILE_FAKER_URLS:
+# Fetch proxies từ các nguồn
+def fetch_proxies():
+    proxies = set()
+    for url in SOURCES:
         try:
             res = requests.get(url, timeout=10)
             if res.ok:
-                return res.json()
-        except:
-            continue
-    raise Exception("All Profile Faker servers unreachable")
-
-# Fetch BIN list
-def fetch_bin():
-    for url in BIN_FETCHER_URLS:
-        try:
-            res = requests.get(url, timeout=10)
-            if res.ok:
-                bins = res.json().get('bins', [])  # <- Phải get 'bins' chứ không phải 'results'
-                if not bins:
-                    raise Exception("BIN list empty")
-                return random.choice(bins)
+                lines = res.text.strip().splitlines()
+                for line in lines:
+                    if ':' in line:
+                        proxies.add(line.strip())
         except Exception as e:
-            print(f"[Warning] BIN server {url} failed: {e}")
-            continue
-    raise Exception("All BIN servers unreachable")
+            print(f"[Warning] Failed fetching from {url}: {e}")
+    return list(proxies)
 
-
-# Simulate signup function
-def signup_trial(service):
-    profile = fetch_profile()
-    bin_card = fetch_bin()
-    proxy_info = {
-        "ip": f"{random.randint(10,250)}.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(0,255)}",
-        "port": random.randint(1000,9999),
-        "user": profile['email'],
-        "pass": bin_card['bin'],
-        "provider": service['service'],
-        "expire": time.strftime('%Y-%m-%d', time.localtime(time.time() + 3*24*3600))
-    }
-    return proxy_info
-
-# Save proxy cache
-def save_cache(data):
-    with open(PROXY_CACHE_FILE, "w") as f:
-        print(f"[Info] Saving {len(data)} proxies to cache...")
-        json.dump(data, f, indent=2)
-
-# Load proxy cache
-def load_cache():
-    try:
-        with open(PROXY_CACHE_FILE) as f:
-            return json.load(f)
-    except:
-        return []
-
-# Check proxy alive
+# Kiểm tra proxy
 def check_proxy(proxy):
     try:
         proxies = {
-            "http": f"http://{proxy['ip']}:{proxy['port']}",
-            "https": f"http://{proxy['ip']}:{proxy['port']}"
+            "http": f"http://{proxy}",
+            "https": f"http://{proxy}"
         }
         res = requests.get("https://api.ipify.org", proxies=proxies, timeout=5)
         return res.ok
     except:
         return False
 
-# Main refresh logic
-def refresh_proxy():
-    cache = load_cache()
+# Crawl và kiểm tra proxy
+def refresh_proxies():
+    print("[Info] Fetching proxy list...")
+    proxies = fetch_proxies()
     alive = []
-    for proxy in cache:
-        if check_proxy(proxy):
-            alive.append(proxy)
-    with open(ALIVE_CACHE_FILE, "w") as f:
-        json.dump(alive, f, indent=2)
-    print(f"[Info] Alive proxies: {len(alive)}")
-    if len(alive) < 20:
-        print("[Warning] Proxy low! Auto sign up...")
-        for _ in range(30 - len(alive)):
-            service = random.choice([s for s in TRIAL_SOURCES if s['auto_signup']])
-            new_proxy = signup_trial(service)
-            print(f"[Info] New proxy: {new_proxy}")
-            alive.append(new_proxy)
-        save_cache(alive)
 
-# Background worker
+    def worker(proxy):
+        if check_proxy(proxy):
+            print(f"[Alive] {proxy}")
+            alive.append(proxy)
+
+    threads = []
+    for p in proxies:
+        t = threading.Thread(target=worker, args=(p,))
+        t.start()
+        threads.append(t)
+        time.sleep(0.01)  # tránh quá tải
+
+    for t in threads:
+        t.join()
+
+    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+    with open(ALIVE_FILE, "w") as f:
+        json.dump(alive, f, indent=2)
+    print(f"[Success] {len(alive)} alive proxies saved.")
+
+# Hàm load cho Flask App
+def load_proxies():
+    try:
+        with open(ALIVE_FILE) as f:
+            return json.load(f)
+    except:
+        return []
+
+# Worker nền
 def background_worker():
     while True:
-        refresh_proxy()
-        time.sleep(3600)
+        refresh_proxies()
+        time.sleep(3600)  # 1h refresh lại
 
+# Khởi động riêng nếu chạy trực tiếp
 if __name__ == "__main__":
-    t = threading.Thread(target=background_worker)
-    t.daemon = True
-    t.start()
-    print("[System] Proxy Fetcher V2.5 running...")
-    while True:
-        time.sleep(3600)
+    refresh_proxies()

@@ -1,79 +1,53 @@
 {% extends "index.html" %}
-{% block title %}BIN Checker{% endblock %}
-{% block content %}
-<h2>BIN Checker</h2>
 
-<div class="input-row">
-  <input class="input-email" type="text" id="binSearch" placeholder="Enter BIN, Bank or Country">
-  <button class="input-button" onclick="searchBin()">Search</button>
-  <button class="input-button" onclick="refreshBin()">Refresh BIN Cache</button>
+{% block title %}BIN List{% endblock %}
+
+{% block content %}
+<h2>BIN Explorer</h2>
+<div class="bin-table-container">
+  <button class="input-button" onclick="refreshBin()">Refresh BIN</button>
+  <input type="text" id="binSearch" placeholder="Search BIN, Bank, Country..." onkeyup="filterBinTable()">
+
+  <table id="binTable">
+    <thead>
+      <tr>
+        <th>BIN</th>
+        <th>Card Number</th>
+        <th>Expiry</th>
+        <th>CVC</th>
+        <th>Bank</th>
+        <th>Country</th>
+        <th>Brand</th>
+        <th>Scheme</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody id="binTableBody">
+    </tbody>
+  </table>
 </div>
 
-<table id="binTable" style="display:none">
-  <thead>
-    <tr>
-      <th>BIN</th>
-      <th>Bank</th>
-      <th>Type</th>
-      <th>Country</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<button id="loadMore" class="input-button" style="display:none" onclick="renderBinTable()">Load More</button>
-
 <script>
-let cachedBins = [];
-let currentIndex = 0;
-const PAGE_SIZE = 50;
-
-async function loadBinCache() {
+async function loadBinList() {
   const res = await fetch('/api/binlist');
   const data = await res.json();
-  if (data.status !== 'ok') {
-    alert('Failed to load BIN data!');
-    return;
-  }
-  cachedBins = data.bins;
-  currentIndex = 0;
-  document.getElementById('binTable').style.display = 'table';
-  renderBinTable();
-}
-
-function renderBinTable() {
-  const tbody = document.querySelector('#binTable tbody');
-  const end = Math.min(currentIndex + PAGE_SIZE, cachedBins.length);
-  for (let i = currentIndex; i < end; i++) {
-    const bin = cachedBins[i];
+  const tbody = document.getElementById('binTableBody');
+  tbody.innerHTML = '';
+  data.bins.forEach(item => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${bin.bin}</td>
-      <td>${bin.bank}</td>
-      <td>${bin.type}</td>
-      <td>${bin.country}</td>
+      <td>${item.bin}</td>
+      <td>${item.card_number}</td>
+      <td>${item.expiry}</td>
+      <td>${item.cvc}</td>
+      <td>${item.bank}</td>
+      <td>${item.country}</td>
+      <td>${item.brand}</td>
+      <td>${item.scheme}</td>
+      <td>${item.type}</td>
     `;
     tbody.appendChild(tr);
-  }
-  currentIndex = end;
-  if (currentIndex >= cachedBins.length) {
-    document.getElementById('loadMore').style.display = 'none';
-  } else {
-    document.getElementById('loadMore').style.display = 'block';
-  }
-}
-
-function searchBin() {
-  const keyword = document.getElementById('binSearch').value.trim().toLowerCase();
-  const filtered = cachedBins.filter(bin =>
-    bin.bin.includes(keyword) ||
-    (bin.bank && bin.bank.toLowerCase().includes(keyword)) ||
-    (bin.country && bin.country.toLowerCase().includes(keyword))
-  );
-  currentIndex = 0;
-  cachedBins = filtered;
-  document.querySelector('#binTable tbody').innerHTML = '';
-  renderBinTable();
+  });
 }
 
 async function refreshBin() {
@@ -82,12 +56,44 @@ async function refreshBin() {
   const data = await res.json();
   if (data.status === 'ok') {
     alert('BIN Cache refreshed! Reloading...');
-    loadBinCache();
+    loadBinList();
   } else {
     alert('Failed to refresh BIN cache.');
   }
 }
+function filterBinTable() {
+  const input = document.getElementById('binSearch').value.toLowerCase();
+  const rows = document.querySelectorAll('#binTable tbody tr');
+  rows.forEach(row => {
+    row.style.display = row.innerText.toLowerCase().includes(input) ? '' : 'none';
+  });
+}
 
-loadBinCache();
+window.onload = loadBinList;
 </script>
+
+<style>
+.bin-table-container {
+  margin: 20px;
+  overflow-x: auto;
+}
+#binSearch {
+  margin-bottom: 10px;
+  padding: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+#binTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+#binTable th, #binTable td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+#binTable th {
+  background-color: #f0f0f0;
+}
+</style>
 {% endblock %}

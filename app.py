@@ -7,19 +7,15 @@ from utils.gallery_fetcher import fetch_media
 from utils.media_downloader import download_from_url
 from utils.telethon_helper import fetch_telegram_media
 from utils.profile_proxy import generate_profile_proxy
-from utils.bin_fetcher import generate_bin_cache
 from utils.account_fetcher import fetch_accounts
 # --- thêm mới ---
-from utils.proxy_fetcher import background_worker
+from utils.proxy_fetcher import load_proxies
 from utils.keepalive_bot import start_keepalive_bot
-from utils.media_crawler import crawl_and_upload
+from utils.r2_fetcher import fetch_media_from_r2
 
 start_keepalive_bot()
 
 app = Flask(__name__)
-
-# Start proxy fetcher bot in background
-threading.Thread(target=background_worker, daemon=True).start()
 
 @app.route('/')
 def profile_faker_page():
@@ -28,9 +24,9 @@ def profile_faker_page():
 @app.route('/api/profile')
 def api_profile():
     locale = request.args.get('locale', 'en_US')
-    # profile_data = generate_profile_proxy({'locale': locale})
-    return jsonify(generate_profile(locale))
-    # return jsonify(profile_data)
+    # profile_data = jsonify(generate_profile(locale))
+    profile_data = generate_profile_proxy({'locale': locale})
+    return jsonify(profile_data)
 
 @app.route('/media')
 def media_gallery_page():
@@ -38,10 +34,20 @@ def media_gallery_page():
 
 @app.route('/api/media')
 def api_media():
-    keyword = request.args.get('keyword', '')
-    if not keyword:
+    source = request.args.get('source', '')
+    if not source:
         return jsonify({'status': 'error', 'message': 'Missing keyword'}), 400
-    return jsonify(fetch_media(keyword))
+    return jsonify(fetch_media(source))
+
+@app.route('/api/r2media')
+def api_r2media():
+    source = request.args.get('source', '')
+    if not source:
+        return jsonify({'status': 'error', 'message': 'Missing source'}), 400
+    media = fetch_media_from_r2(source)
+    if not media:
+        return jsonify({'status': 'error', 'message': 'No media found'}), 404
+    return jsonify({'status': 'ok', 'results': media})
 
 @app.route('/universal-downloader')
 def universal_downloader_page():
@@ -81,14 +87,6 @@ def api_binlist():
         return jsonify({'status': 'ok', 'bins': bins})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/refresh-bin')
-def api_refresh_bin():
-    try:
-        generate_bin_cache()
-        return jsonify({'status': 'ok', 'message': 'BIN cache refreshed successfully!'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
     
 # Route account fetcher page
 @app.route('/account-fetcher')
@@ -105,24 +103,13 @@ def api_account_fetcher():
         return jsonify({'status': 'error', 'message': str(e)})
     
 @app.route('/proxy')
-def proxy_fetcher():
+def proxy_fetcher_page():
     return render_template('proxy_fetcher.html')
 
-@app.route('/api/proxylist')
-def api_proxylist():
-    proxy_type = request.args.get('type', '').lower()
-    country = request.args.get('country', '').upper()
-    try:
-        with open('static/cache/proxy_cache.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        results = data
-        if proxy_type:
-            results = [p for p in results if p['type'].lower() == proxy_type]
-        if country:
-            results = [p for p in results if p['country'].upper() == country]
-        return jsonify({'status': 'ok', 'results': results})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+@app.route('/api/proxies')
+def api_proxies():
+    proxies = load_proxies()
+    return jsonify({'proxies': proxies})
     
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
