@@ -1,4 +1,4 @@
-const R2_BASE = "https://hopehub-storage.c9ac3686ee9b83a90c8f01bd6cd077fa.r2.dev/media";
+const R2_BASE = "https://lam.io.vn/MEDIA/";
 
 async function loadGallery() {
   const source = document.getElementById('sourceSelect').value;
