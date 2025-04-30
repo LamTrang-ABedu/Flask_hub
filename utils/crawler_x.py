@@ -3,23 +3,23 @@ import requests
 import tempfile
 import os
 
-def crawl(username="realgirlsvids", limit=30):
-    print(f"[X Crawler] Crawling user: {username}")
-    output_dir = f"gallerydl_x_{username}"
+def crawl(username="femalemodels", limit=30):
+    print(f"[Instagram Crawler] Crawling user: {username}")
+    output_dir = f"gallerydl_ig_{username}"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Download cookies from R2
-    cookies_url = "https://r2.lam.io.vn/cookies/x_cookies.txt"
+    # Tải cookies từ R2
+    cookies_url = "https://r2.lam.io.vn/cookies/instagram_cookies.txt"
     with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp_cookie:
         res = requests.get(cookies_url, timeout=10)
         res.raise_for_status()
         tmp_cookie.write(res.content)
         cookie_path = tmp_cookie.name
 
-    # Build gallery-dl command
+    # Gọi gallery-dl
     cmd = [
         "gallery-dl",
-        f"https://x.com/{username}/media",
+        f"https://www.instagram.com/{username}/",
         "--cookies", cookie_path,
         "--range", f"1-{limit}",
         "--dest", output_dir,
@@ -30,10 +30,10 @@ def crawl(username="realgirlsvids", limit=30):
     try:
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"[X Crawler] Gallery-dl failed: {e}")
+        print(f"[Instagram Crawler] Gallery-dl failed: {e}")
         return []
 
-    # Build results list from downloaded files
+    # Kết quả dạng HopeHub
     results = []
     for root, dirs, files in os.walk(output_dir):
         for file in files:
