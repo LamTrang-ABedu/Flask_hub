@@ -16,7 +16,7 @@ def crawl(username="femalemodels", limit=30):
         tmp_cookie.write(res.content)
         cookie_path = tmp_cookie.name
 
-    # Gọi gallery-dl
+    # Gọi gallery-dl với log stdout/stderr
     cmd = [
         "gallery-dl",
         f"https://www.instagram.com/{username}/",
@@ -24,16 +24,21 @@ def crawl(username="femalemodels", limit=30):
         "--range", f"1-{limit}",
         "--dest", output_dir,
         "--download-archive", os.path.join(output_dir, "archive.txt"),
-        "--quiet"
+        "--verbose"
     ]
 
     try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[Instagram Crawler] Gallery-dl failed: {e}")
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        print("[STDOUT]\n", result.stdout)
+        print("[STDERR]\n", result.stderr)
+        if result.returncode != 0:
+            print(f"[Instagram Crawler] gallery-dl exited with code {result.returncode}")
+            return []
+    except Exception as e:
+        print(f"[Instagram Crawler] Unexpected error: {e}")
         return []
 
-    # Kết quả dạng HopeHub
+    # Đọc kết quả về HopeHub format
     results = []
     for root, dirs, files in os.walk(output_dir):
         for file in files:
