@@ -72,7 +72,7 @@ def telegram_gallery_page():
 def api_telegram_gallery():
     username = request.args.get("username", "").strip()
     limit = int(request.args.get("limit", 30))
-
+    print(f"[Instagram Crawler] Crawling user: {username}")
     if not username:
         return jsonify({"status": "error", "message": "Missing or invalid source/username"}), 400
 
