@@ -4,19 +4,25 @@ import tempfile
 import os
 
 def crawl(username="femalemodels", limit=30):
-    print(f"[Instagram Crawler] Crawling user: {username}")
+    print(f"[Instagram Crawler] Start crawling user: {username}")
     output_dir = f"gallerydl_ig_{username}"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Tải cookies từ R2
-    cookies_url = "https://r2.lam.io.vn/cookies/instagram_cookies.txt"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp_cookie:
+    # Step 1: Load cookies from R2
+    try:
+        cookies_url = "https://r2.lam.io.vn/cookies/instagram_cookies.txt"
+        print(f"[Instagram Crawler] Downloading cookies from {cookies_url}")
         res = requests.get(cookies_url, timeout=10)
         res.raise_for_status()
-        tmp_cookie.write(res.content)
-        cookie_path = tmp_cookie.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode='w') as tmp_cookie:
+            tmp_cookie.write(res.text)
+            cookie_path = tmp_cookie.name
+        print(f"[Instagram Crawler] Saved cookies to: {cookie_path}")
+    except Exception as e:
+        print(f"[Instagram Crawler] Failed to load cookies: {e}")
+        return []
 
-    # Gọi gallery-dl với log stdout/stderr
+    # Step 2: Build gallery-dl command
     cmd = [
         "gallery-dl",
         f"https://www.instagram.com/{username}/",
@@ -26,20 +32,23 @@ def crawl(username="femalemodels", limit=30):
         "--download-archive", os.path.join(output_dir, "archive.txt"),
         "--verbose"
     ]
+    print(f"[Instagram Crawler] Running command: {' '.join(cmd)}")
 
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        print("[STDOUT]\n", result.stdout)
-        print("[STDERR]\n", result.stderr)
+        print(f"[gallery-dl stdout]\n{result.stdout}")
+        print(f"[gallery-dl stderr]\n{result.stderr}")
         if result.returncode != 0:
-            print(f"[Instagram Crawler] gallery-dl exited with code {result.returncode}")
+            print(f"[Instagram Crawler] gallery-dl failed with exit code {result.returncode}")
             return []
     except Exception as e:
-        print(f"[Instagram Crawler] Unexpected error: {e}")
+        print(f"[Instagram Crawler] Exception during gallery-dl call: {e}")
         return []
 
-    # Đọc kết quả về HopeHub format
+    # Step 3: Collect media files
+    print(f"[Instagram Crawler] Checking output dir: {output_dir}")
     results = []
+    file_count = 0
     for root, dirs, files in os.walk(output_dir):
         for file in files:
             if file.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".mp4")):
@@ -49,5 +58,7 @@ def crawl(username="femalemodels", limit=30):
                     "video": file_path if file.lower().endswith(".mp4") else None,
                     "title": file
                 })
+                file_count += 1
+    print(f"[Instagram Crawler] Found {file_count} media file(s)")
 
     return results
