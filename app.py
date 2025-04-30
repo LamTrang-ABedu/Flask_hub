@@ -11,6 +11,7 @@ from utils.account_fetcher import fetch_accounts
 from utils.proxy_fetcher import load_proxies
 from utils.keepalive_bot import start_keepalive_bot
 from utils.r2_fetcher import fetch_media_from_r2
+from utils.crawler_x import crawl
 
 start_keepalive_bot()
 
@@ -69,10 +70,18 @@ def telegram_gallery_page():
 
 @app.route('/api/telegram-gallery')
 def api_telegram_gallery():
-    group = request.args.get('group', '').strip()
-    if not group:
-        return jsonify({'status': 'error', 'message': 'Missing URL'}), 400
-    return jsonify(api_telegram_download(group))
+        source = request.args.get("source")
+    username = request.args.get("username", "").strip()
+    limit = int(request.args.get("limit", 30))
+
+    if source != "x" or not username:
+        return jsonify({"status": "error", "message": "Missing or invalid source/username"}), 400
+
+    media = crawl(username=username, limit=limit)
+    if not media:
+        return jsonify({"status": "error", "message": "No media found"}), 404
+
+    return jsonify({"status": "ok", "results": media})
     
 @app.route('/binlist')
 def binlist_page():
