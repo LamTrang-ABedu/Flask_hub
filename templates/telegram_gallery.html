@@ -12,7 +12,7 @@
 <script>
 async function load() {
     const username = document.getElementById("username").value;
-    const res = await fetch("/api/media?source=x&username=" + username);
+    const res = await fetch("/api/telegram-gallery?source=x&username=" + username);
     const data = await res.json();
     const div = document.getElementById("results");
     div.innerHTML = "";
