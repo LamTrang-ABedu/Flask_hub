@@ -71,12 +71,12 @@ def telegram_gallery_page():
 @app.route('/api/telegram-gallery')
 def api_telegram_gallery():
     username = request.args.get("username", "").strip()
-    limit = int(request.args.get("limit", 30))
+    
     print(f"[Instagram Crawler] Crawling user: {username}")
     if not username:
         return jsonify({"status": "error", "message": "Missing or invalid source/username"}), 400
 
-    media = crawl(username=username, limit=limit)
+    media = crawl(username=username, limit=30)
     if not media:
         return jsonify({"status": "error", "message": "No media found"}), 404
 
