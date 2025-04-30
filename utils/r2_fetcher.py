@@ -1,5 +1,6 @@
 import requests
 import os
+from functools import lru_cache
 
 R2_PUBLIC_BASE = "https://r2.lam.io.vn/"
 
@@ -11,21 +12,38 @@ SOURCE_TO_FILE = {
     "bin": "BIN/bins_real_full.json"
 }
 
-def fetch_media_from_r2(source):
+# Internal cache (thay vì lru_cache decorator để dùng được force_reload)
+_cached_media = {}
+
+def fetch_media_from_r2(source, force_reload=False):
+    source = source.lower()
+    file_path = SOURCE_TO_FILE.get(source)
+    if not file_path:
+        print(f"[Error] Unknown source: {source}")
+        return []
+
+    if not force_reload and source in _cached_media:
+        print(f"[Cache] Returning cached data for {source}")
+        return _cached_media[source]
+
     try:
-        file_path = SOURCE_TO_FILE.get(source.lower())
-        if not file_path:
-            return None
         url = f"{R2_PUBLIC_BASE}/{file_path}"
         print(f"[Info] Fetching {url} from R2...")
         res = requests.get(url, timeout=10)
-        if res.ok:
-            data = res.json()
+        res.raise_for_status()
+        data = res.json()
+
+        if isinstance(data, list):
+            _cached_media[source] = data
             print(f"[Success] Fetched {len(data)} items from {source} on R2")
             return data
         else:
-            print(f"[Error] Failed to fetch {url}: {res.status_code}")
-            return None
+            print(f"[Warning] Unexpected data format from {source}, expected list.")
+            return []
+
+    except requests.RequestException as e:
+        print(f"[Error] HTTP error while fetching {source}: {e}")
     except Exception as e:
-        print(f"[Error] Fetch R2 {source}: {e}")
-        return None
+        print(f"[Error] Failed to fetch or parse JSON for {source}: {e}")
+
+    return []

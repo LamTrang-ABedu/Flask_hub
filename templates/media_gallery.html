@@ -1,39 +1,190 @@
 {% extends "index.html" %}
 {% block title %}Media Gallery{% endblock %}
 {% block content %}
-<h2>Media Gallery (Google Drive Proxy)</h2>
+
+<h2>Media Gallery</h2>
+
+<label for="sourceSelect">Choose source:</label>
 <select id="sourceSelect" onchange="loadGallery()">
   <option value="">-- Select Source --</option>
   <option value="redgifs">RedGifs</option>
   <option value="xvideos">Xvideos</option>
+  <option value="pornhub">Pornhub</option>
 </select>
 
-<div id="mediaGrid" class="media-grid"></div>
+<div id="mediaStatus" style="margin: 10px 0; color: #555;"></div>
+
+<div id="mediaContainer" class="media-container">
+  <div id="mediaList" class="media-list"></div>
+  <div id="mediaPreview" class="media-preview">
+    <p>Select a media to preview</p>
+  </div>
+</div>
+
+<style>
+  .media-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .media-list {
+    flex: 1;
+    min-width: 280px;
+    max-width: 320px;
+    overflow-y: auto;
+    max-height: 80vh;
+    border-right: 1px solid #ccc;
+    padding-right: 0.5rem;
+  }
+
+  .media-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+  }
+
+  .media-item:hover {
+    background: #f0f0f0;
+  }
+
+  .media-item img {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .media-item div {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .media-preview {
+    flex: 2;
+    padding: 1rem;
+    min-width: 300px;
+    background: #fafafa;
+    border-radius: 8px;
+    min-height: 200px;
+  }
+
+  .media-preview img,
+  .media-preview video,
+  .media-preview iframe {
+    max-width: 100%;
+    max-height: 480px;
+    border-radius: 8px;
+  }
+
+  .media-preview h3 {
+    margin-bottom: 0.5rem;
+  }
+</style>
 
 <script>
 async function loadGallery() {
   const source = document.getElementById('sourceSelect').value;
-  if (!source) return;
-  const res = await fetch(`/api/media?source=${source}`);
-  const data = await res.json();
-  const grid = document.getElementById('mediaGrid');
-  grid.innerHTML = '';
+  const list = document.getElementById('mediaList');
+  const preview = document.getElementById('mediaPreview');
+  const status = document.getElementById('mediaStatus');
 
-  if (data.status !== 'ok') {
-    grid.innerHTML = '<p>Failed to load.</p>';
+  list.innerHTML = '';
+  preview.innerHTML = '<p>Select a media to preview</p>';
+  status.textContent = 'Loading...';
+
+  if (!source) {
+    status.textContent = 'Please select a source.';
     return;
   }
 
-  data.results.forEach(item => {
-    const card = document.createElement('div');
-    card.className = 'media-card';
-    card.innerHTML = `
-      <img src="${item.thumb}" alt="${item.title}" loading="lazy">
-      <p>${item.title}</p>
-      <a href="${item.video}" target="_blank">Watch</a>
+  try {
+    const res = await fetch(`/api/media?source=${source}`);
+    const data = await res.json();
+
+    if (data.status !== 'ok') {
+      status.textContent = `Error: ${data.message || 'Failed to load'}`;
+      return;
+    }
+
+    status.textContent = `Showing ${data.results.length} items from ${source}`;
+
+    data.results.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'media-item';
+      div.innerHTML = `
+        <img src="${item.thumb}" alt="${item.title || 'No Title'}">
+        <div>${item.title || 'No Title'}</div>
+      `;
+      div.onclick = () => showPreview(item);
+      list.appendChild(div);
+    });
+
+  } catch (err) {
+    console.error(err);
+    status.textContent = `Network error: ${err.message}`;
+  }
+}
+
+function showPreview(item) {
+  const preview = document.getElementById('mediaPreview');
+  const videoURL = item.video;
+  const title = item.title || 'Untitled';
+  const isMP4 = videoURL.endsWith('.mp4');
+  const isRedgifs = videoURL.includes('redgifs');
+  const isPornhub = videoURL.includes('pornhub.com/view_video.php');
+  const isXvideos = videoURL.includes('xvideos.com/video');
+
+  let content = '';
+
+  if (isMP4 || isRedgifs) {
+    content = `
+      <video controls autoplay muted playsinline src="${videoURL}" poster="${item.thumb}"></video>
     `;
-    grid.appendChild(card);
-  });
+  } else if (isPornhub) {
+    const match = videoURL.match(/viewkey=([a-zA-Z0-9]+)/);
+    let viewkey = match ? match[1] : null;
+
+    // Nếu thiếu tiền tố "ph", thêm vào
+    if (viewkey && !viewkey.startsWith('ph')) {
+      viewkey = 'ph' + viewkey;
+    }
+
+    if (viewkey) {
+      content = `<iframe src="https://www.pornhub.com/embed/${viewkey}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
+    } else {
+      content = `
+        <p><strong>Unable to preview this video (invalid viewkey).</strong></p>
+        <img src="${item.thumb}" alt="${item.title || 'No Title'}">
+      `;
+    }
+  } else if (isXvideos) {
+    const match = videoURL.match(/\/video(\d+)\//);
+    const id = match ? match[1] : null;
+    if (id) {
+      content = `<iframe src="https://www.xvideos.com/embedframe/${id}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
+    } else {
+      content = `<p>Unable to extract video ID from Xvideos link.</p>`;
+    }
+  } else {
+    content = `<img src="${item.thumb}" alt="${title}">`;
+  }
+
+  preview.innerHTML = `
+    <h3>${title}</h3>
+    ${content}
+    <p><a href="${videoURL}" target="_blank">Open Original</a></p>
+  `;
 }
 </script>
+
 {% endblock %}

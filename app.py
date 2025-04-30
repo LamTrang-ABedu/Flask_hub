@@ -5,7 +5,6 @@ from flask import Flask, render_template, request, jsonify
 from utils.profile_faker import generate_profile
 from utils.gallery_fetcher import fetch_media
 from utils.media_downloader import download_from_url
-from utils.telethon_helper import fetch_telegram_media
 from utils.fallback_proxy import generate_profile_proxy, api_media_download, api_telegram_download
 from utils.account_fetcher import fetch_accounts
 # --- thêm mới ---
@@ -39,12 +38,18 @@ def api_media():
     #     return jsonify({'status': 'error', 'message': 'Missing keyword'}), 400
     # return jsonify(fetch_media(source))
 
-    source = request.args.get('source', '')
+    source = request.args.get('source', '').strip().lower()
     if not source:
         return jsonify({'status': 'error', 'message': 'Missing source'}), 400
-    media = fetch_media_from_r2(source)
-    if not media:
-        return jsonify({'status': 'error', 'message': 'No media found'}), 404
+
+    try:
+        media = fetch_media_from_r2(source)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Internal error: {str(e)}'}), 500
+
+    if not isinstance(media, list):
+        return jsonify({'status': 'error', 'message': 'Unexpected data format'}), 500
+
     return jsonify({'status': 'ok', 'results': media})
 
 @app.route('/universal-downloader')
