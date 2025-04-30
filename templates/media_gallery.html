@@ -10,6 +10,7 @@
   <option value="redgifs">RedGifs</option>
   <option value="xvideos">Xvideos</option>
   <option value="pornhub">Pornhub</option>
+  <option value="reddit">Reddit</option>
 </select>
 
 <div id="mediaStatus" style="margin: 10px 0; color: #555;"></div>
@@ -139,10 +140,11 @@ function showPreview(item) {
   const preview = document.getElementById('mediaPreview');
   const videoURL = item.video;
   const title = item.title || 'Untitled';
-  const isMP4 = videoURL.endsWith('.mp4');
-  const isRedgifs = videoURL.includes('redgifs');
-  const isPornhub = videoURL.includes('pornhub.com/view_video.php');
-  const isXvideos = videoURL.includes('xvideos.com/video');
+  const isMP4 = videoURL && videoURL.endsWith('.mp4');
+  const isRedgifs = videoURL && videoURL.includes('redgifs');
+  const isPornhub = videoURL && videoURL.includes('pornhub.com/view_video.php');
+  const isXvideos = videoURL && videoURL.includes('xvideos.com/video');
+  const isReddit = item.post_url && item.thumb && item.video === null;
 
   let content = '';
 
@@ -153,19 +155,12 @@ function showPreview(item) {
   } else if (isPornhub) {
     const match = videoURL.match(/viewkey=([a-zA-Z0-9]+)/);
     let viewkey = match ? match[1] : null;
-
-    // Nếu thiếu tiền tố "ph", thêm vào
-    if (viewkey && !viewkey.startsWith('ph')) {
-      viewkey = 'ph' + viewkey;
-    }
+    if (viewkey && !viewkey.startsWith('ph')) viewkey = 'ph' + viewkey;
 
     if (viewkey) {
       content = `<iframe src="https://www.pornhub.com/embed/${viewkey}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
     } else {
-      content = `
-        <p><strong>Unable to preview this video (invalid viewkey).</strong></p>
-        <img src="${item.thumb}" alt="${item.title || 'No Title'}">
-      `;
+      content = `<p><strong>Unable to preview this video (invalid viewkey).</strong></p><img src="${item.thumb}" alt="${title}">`;
     }
   } else if (isXvideos) {
     const match = videoURL.match(/\/video(\d+)\//);
@@ -175,6 +170,11 @@ function showPreview(item) {
     } else {
       content = `<p>Unable to extract video ID from Xvideos link.</p>`;
     }
+  } else if (isReddit) {
+    content = `
+      <img src="${item.thumb}" alt="${title}">
+      <p><a href="${item.post_url}" target="_blank">View on Reddit</a></p>
+    `;
   } else {
     content = `<img src="${item.thumb}" alt="${title}">`;
   }
@@ -182,7 +182,7 @@ function showPreview(item) {
   preview.innerHTML = `
     <h3>${title}</h3>
     ${content}
-    <p><a href="${videoURL}" target="_blank">Open Original</a></p>
+    ${videoURL && !isReddit ? `<p><a href="${videoURL}" target="_blank">Open Original</a></p>` : ""}
   `;
 }
 </script>

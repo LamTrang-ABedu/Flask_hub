@@ -9,6 +9,7 @@ SOURCE_TO_FILE = {
     "xvideos": "MEDIA/xvideos_media.json",
     "redgifs": "MEDIA/redgifs_media.json",
     "pornhub": "MEDIA/pornhub_media.json",
+    "reddit": "MEDIA/reddit_media.json",
     "bin": "BIN/bins_real_full.json"
 }
 
