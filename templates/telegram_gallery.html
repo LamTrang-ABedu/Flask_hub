@@ -1,52 +1,39 @@
-
-{% extends "index.html" %}
-{% block title %}Telegram Media Gallery{% endblock %}
-{% block content %}
-<h2>Telegram Media Gallery</h2>
-<div style="margin-bottom: 20px; display: flex; gap: 10px;">
-  <input type="text" id="groupInput" placeholder="Enter Telegram group or channel (e.g. @fsoft_channel)" style="flex: 1; padding: 8px;">
-  <button onclick="loadTelegramMedia()" style="width: 120px;">Fetch</button>
-</div>
-<div id="galleryResult" class="grid-gallery"></div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>X.com Media Preview</title>
+</head>
+<body>
+    <h2>Enter X Username</h2>
+    <input id="username" placeholder="e.g. realgirlsvids" />
+    <button onclick="load()">Load</button>
+    <div id="results"></div>
 
 <script>
-async function loadTelegramMedia() {
-  const group = document.getElementById('groupInput').value.trim();
-  const container = document.getElementById('galleryResult');
-  container.innerHTML = '';
-  if (!group) return alert('Please enter group/channel name');
-  const res = await fetch(`/api/telegram-gallery?group=${encodeURIComponent(group)}`);
-  const data = await res.json();
-  if (data.status !== 'ok') {
-    container.innerHTML = `<p style="color:red;">Error: ${data.message}</p>`;
-    return;
-  }
-  for (const item of data.media) {
-    const card = document.createElement('div');
-    card.className = 'media-card';
-    card.innerHTML = `<p><strong>${item.title || 'Media'}</strong></p>`;
-    if (item.type === 'video') {
-      card.innerHTML += `<video src="${item.preview_url}" controls style="width:100%; margin-top:8px;"></video>`;
-    } else {
-      card.innerHTML += `<img src="${item.preview_url}" style="width:100%; margin-top:8px; border-radius:4px;">`;
+async function load() {
+    const username = document.getElementById("username").value;
+    const res = await fetch("/api/media?source=x&username=" + username);
+    const data = await res.json();
+    const div = document.getElementById("results");
+    div.innerHTML = "";
+
+    if (data.status !== "ok") {
+        div.innerHTML = "<p>Failed: " + data.message + "</p>";
+        return;
     }
-    card.innerHTML += `<a href="${item.download_url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download</a>`;
-    container.appendChild(card);
-  }
+
+    data.results.forEach(item => {
+        const block = document.createElement("div");
+        block.innerHTML = `
+            <p>${item.title}</p>
+            ${item.video ? 
+                `<video controls width="400" src="${item.video}"></video>` :
+                `<img src="${item.thumb}" width="400"/>`}
+            <hr/>
+        `;
+        div.appendChild(block);
+    });
 }
 </script>
-
-<style>
-.grid-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
-}
-.media-card {
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 8px;
-  background: #fafafa;
-}
-</style>
-{% endblock %}
+</body>
+</html>
