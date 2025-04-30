@@ -1,39 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>X.com Media Preview</title>
-</head>
-<body>
-    <h2>Enter X Username</h2>
-    <input id="username" placeholder="e.g. realgirlsvids" />
-    <button onclick="load()">Load</button>
-    <div id="results"></div>
+{% extends "index.html" %}
+{% block title %}Instagram Gallery{% endblock %}
+
+{% block content %}
+<h2>Instagram Gallery</h2>
+<input id="username" placeholder="e.g. femalemodels" />
+<button onclick="load()">Load</button>
+<div id="results" style="margin-top: 1rem;"></div>
 
 <script>
 async function load() {
-    const username = document.getElementById("username").value;
-    const res = await fetch("/api/x-gallery?username=" + username);
-    const data = await res.json();
-    const div = document.getElementById("results");
-    div.innerHTML = "";
+  const username = document.getElementById("username").value;
+  const res = await fetch(`/api/ig-gallery?username=${username}`);
+  const data = await res.json();
+  const div = document.getElementById("results");
+  div.innerHTML = "";
 
-    if (data.status !== "ok") {
-        div.innerHTML = "<p>Failed: " + data.message + "</p>";
-        return;
-    }
+  if (data.status !== "ok") {
+    div.innerHTML = `<p>Failed: ${data.message}</p>`;
+    return;
+  }
 
-    data.results.forEach(item => {
-        const block = document.createElement("div");
-        block.innerHTML = `
-            <p>${item.title}</p>
-            ${item.video ? 
-                `<video controls width="400" src="${item.video}"></video>` :
-                `<img src="${item.thumb}" width="400"/>`}
-            <hr/>
-        `;
-        div.appendChild(block);
-    });
+  data.results.forEach(item => {
+    const block = document.createElement("div");
+    block.innerHTML = `
+      <p>${item.title}</p>
+      ${item.video ? 
+        `<video controls width="400" src="${item.video}"></video>` :
+        `<img src="${item.thumb}" width="400"/>`}
+      <hr/>
+    `;
+    div.appendChild(block);
+  });
 }
 </script>
-</body>
-</html>
+{% endblock %}
