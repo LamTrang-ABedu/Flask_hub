@@ -68,7 +68,7 @@ def api_universal_download():
 def telegram_gallery_page():
     return render_template('telegram_gallery.html')
 
-@app.route('/api/telegram-gallery')
+@app.route('/api/x-gallery')
 def api_telegram_gallery():
     username = request.args.get("username", "").strip()
     
