@@ -70,11 +70,10 @@ def telegram_gallery_page():
 
 @app.route('/api/telegram-gallery')
 def api_telegram_gallery():
-        source = request.args.get("source")
     username = request.args.get("username", "").strip()
     limit = int(request.args.get("limit", 30))
 
-    if source != "x" or not username:
+    if not username:
         return jsonify({"status": "error", "message": "Missing or invalid source/username"}), 400
 
     media = crawl(username=username, limit=limit)
