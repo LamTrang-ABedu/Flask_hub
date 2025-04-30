@@ -68,18 +68,14 @@ def api_universal_download():
 def telegram_gallery_page():
     return render_template('telegram_gallery.html')
 
-@app.route('/api/x-gallery')
-def api_telegram_gallery():
+@app.route('/api/ig-gallery')
+def api_instagram_gallery():
     username = request.args.get("username", "").strip()
-    
-    print(f"[Instagram Crawler] Crawling user: {username}")
     if not username:
-        return jsonify({"status": "error", "message": "Missing or invalid source/username"}), 400
-
+        return jsonify({"status": "error", "message": "Missing username"}), 400
     media = crawl(username=username, limit=30)
     if not media:
         return jsonify({"status": "error", "message": "No media found"}), 404
-
     return jsonify({"status": "ok", "results": media})
     
 @app.route('/binlist')
