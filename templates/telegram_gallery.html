@@ -1,31 +1,52 @@
+
 {% extends "index.html" %}
 {% block title %}Telegram Media Gallery{% endblock %}
 {% block content %}
 <h2>Telegram Media Gallery</h2>
 <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-  <input type="text" id="tgInput" placeholder="Enter Telegram group/channel username (e.g., @groupname)" style="flex: 1; padding: 8px;">
-  <button onclick="fetchTelegramMedia()" style="width: 120px;">Fetch</button>
+  <input type="text" id="groupInput" placeholder="Enter Telegram group or channel (e.g. @fsoft_channel)" style="flex: 1; padding: 8px;">
+  <button onclick="loadTelegramMedia()" style="width: 120px;">Fetch</button>
 </div>
-<div id="tgResult" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;"></div>
+<div id="galleryResult" class="grid-gallery"></div>
+
 <script>
-async function fetchTelegramMedia() {
-  const username = document.getElementById('tgInput').value.trim();
-  const container = document.getElementById('tgResult');
+async function loadTelegramMedia() {
+  const group = document.getElementById('groupInput').value.trim();
+  const container = document.getElementById('galleryResult');
   container.innerHTML = '';
-  if (!username) return alert('Enter Telegram @group or channel username');
-  const res = await fetch(`/api/telegram-media?group=${encodeURIComponent(username)}`);
+  if (!group) return alert('Please enter group/channel name');
+  const res = await fetch(`/api/telegram-gallery?group=${encodeURIComponent(group)}`);
   const data = await res.json();
   if (data.status !== 'ok') {
     container.innerHTML = `<p style="color:red;">Error: ${data.message}</p>`;
     return;
   }
-  data.media.forEach(item => {
-    const div = document.createElement('div');
-    div.style = "border:1px solid #ccc;padding:10px;border-radius:8px;background:#fafafa";
-    div.innerHTML = `<p>${item.caption || ''}</p>`;
-    div.innerHTML += `<p>[${item.type.toUpperCase()} ID: ${item.file_id}]</p>`;
-    container.appendChild(div);
-  });
+  for (const item of data.media) {
+    const card = document.createElement('div');
+    card.className = 'media-card';
+    card.innerHTML = `<p><strong>${item.title || 'Media'}</strong></p>`;
+    if (item.type === 'video') {
+      card.innerHTML += `<video src="${item.preview_url}" controls style="width:100%; margin-top:8px;"></video>`;
+    } else {
+      card.innerHTML += `<img src="${item.preview_url}" style="width:100%; margin-top:8px; border-radius:4px;">`;
+    }
+    card.innerHTML += `<a href="${item.download_url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download</a>`;
+    container.appendChild(card);
+  }
 }
 </script>
+
+<style>
+.grid-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+.media-card {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fafafa;
+}
+</style>
 {% endblock %}

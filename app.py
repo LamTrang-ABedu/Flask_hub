@@ -6,7 +6,7 @@ from utils.profile_faker import generate_profile
 from utils.gallery_fetcher import fetch_media
 from utils.media_downloader import download_from_url
 from utils.telethon_helper import fetch_telegram_media
-from utils.profile_proxy import generate_profile_proxy
+from utils.fallback_proxy import generate_profile_proxy, api_media_download, api_telegram_download
 from utils.account_fetcher import fetch_accounts
 # --- thêm mới ---
 from utils.proxy_fetcher import load_proxies
@@ -62,16 +62,12 @@ def api_universal_download():
 def telegram_gallery_page():
     return render_template('telegram_gallery.html')
 
-@app.route('/api/telegram-media')
-def api_telegram_media():
+@app.route('/api/telegram-gallery')
+def api_telegram_gallery():
     group = request.args.get('group', '').strip()
     if not group:
-        return jsonify({'status': 'error', 'message': 'Missing group'})
-    try:
-        media = fetch_telegram_media(group)
-        return jsonify({'status': 'ok', 'media': media})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'status': 'error', 'message': 'Missing URL'}), 400
+    return jsonify(api_telegram_download(group))
     
 @app.route('/binlist')
 def binlist_page():
@@ -80,8 +76,10 @@ def binlist_page():
 @app.route('/api/binlist')
 def api_binlist():
     try:
-        with open('static/cache/bins_cache.json', 'r', encoding='utf-8') as f:
-            bins = json.load(f)
+        bins = fetch_media_from_r2("bin")
+        print(f"[Success] Fetched {len(bins)} BINs from R2")
+        if not bins:
+            return jsonify({'status': 'error', 'message': 'No media found'}), 404
         return jsonify({'status': 'ok', 'bins': bins})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})

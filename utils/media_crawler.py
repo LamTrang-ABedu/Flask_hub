@@ -2,7 +2,6 @@ import requests
 import os
 import tempfile
 import json
-from utils.gdrive_uploader import upload_file_to_drive
 from bs4 import BeautifulSoup
 
 CACHE_FILE = 'static/cache/gallery_cache.json'
@@ -21,14 +20,9 @@ def crawl_and_upload(source):
                 thumb_url = item['urls']['poster']
                 title = item.get('title', 'RedGif')
 
-                video_link = upload_media(video_url, title + '.mp4')
-                thumb_link = upload_media(thumb_url, title + '.jpg')
-
                 results.append({
                     'title': title,
                     'source': 'redgifs',
-                    'thumb': thumb_link,
-                    'video': video_link,
                     'type': 'video'
                 })
 
@@ -50,34 +44,14 @@ def crawl_and_upload(source):
                 thumb = a_tag.find('img')['data-src'] if a_tag.find('img') else ''
                 title = a_tag.get('title', 'Xvideos Video')
 
-                thumb_link = upload_media(thumb, title + '.jpg')
-
                 results.append({
                     'title': title,
                     'source': 'xvideos',
-                    'thumb': thumb_link,
                     'video': video_page,
                     'type': 'page'
                 })
 
     save_gallery_cache(source, results)
-
-def upload_media(url, filename):
-    print(f"[Info] Uploading media from {url}...")
-    try:
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            r = requests.get(url, stream=True)
-            for chunk in r.iter_content(chunk_size=8192):
-                tmp.write(chunk)
-            tmp_path = tmp.name
-
-        uploaded_link = upload_file_to_drive(tmp_path, filename)
-
-        os.remove(tmp_path)
-        return uploaded_link
-    except Exception as e:
-        print(f"[Error] Upload media failed: {e}")
-        return ''
 
 def save_gallery_cache(source, media_list):
     print(f"[Success] Saving {len(media_list)} media to cache for {source}")
