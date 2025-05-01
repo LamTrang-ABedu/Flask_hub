@@ -45,6 +45,24 @@ def _download_cookie_once(remote_url, local_path):
                 f.write(resp.text)
 
 def _extract_item(info):
+    source_url = info.get('webpage_url', '')
+
+    # Áp dụng formats chỉ với X và Instagram
+    if 'x.com' in source_url or 'twitter.com' in source_url or 'instagram.com' in source_url:
+        best_format = None
+        if 'formats' in info:
+            formats = [f for f in info['formats'] if f.get('ext') == 'mp4' and f.get('url')]
+            best_format = formats[-1] if formats else None
+
+        return {
+            'title': info.get('title'),
+            'url': best_format.get('url') if best_format else info.get('url'),
+            'thumbnail': info.get('thumbnail'),
+            'ext': best_format.get('ext') if best_format else info.get('ext'),
+            'webpage_url': source_url
+        }
+
+    # Các nền tảng khác giữ nguyên
     return {
         'title': info.get('title'),
         'url': info.get('url'),
