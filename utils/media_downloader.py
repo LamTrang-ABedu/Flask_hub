@@ -30,27 +30,17 @@ def download_from_url(url):
             )
             ydl_opts.update({
                 'cookiefile': cookie_path,
-                'skip_download': True,
+                'format': 'mp4',  # không merge audio, lấy link trực tiếp
                 'extract_flat': False,
-                'force_generic_extractor': False,
+                'skip_download': True
             })
 
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             media_list = []
-        
             if 'entries' in info:
                 for entry in info['entries']:
-                    if entry.get('url', '').endswith(('.jpg', '.jpeg', '.png')):
-                        media_list.append({
-                            'title': entry.get('title') or 'Instagram Image',
-                            'url': entry.get('url'),
-                            'thumbnail': entry.get('url'),
-                            'ext': 'jpg',
-                            'webpage_url': entry.get('webpage_url')
-                        })
-                    else:
-                        media_list.append(_extract_item(entry))
+                    media_list.append(_extract_item(entry))
             else:
                 media_list.append(_extract_item(info))
 
