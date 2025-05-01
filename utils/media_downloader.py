@@ -38,9 +38,19 @@ def download_from_url(url):
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             media_list = []
+        
             if 'entries' in info:
                 for entry in info['entries']:
-                    media_list.append(_extract_item(entry))
+                    if entry.get('url', '').endswith(('.jpg', '.jpeg', '.png')):
+                        media_list.append({
+                            'title': entry.get('title') or 'Instagram Image',
+                            'url': entry.get('url'),
+                            'thumbnail': entry.get('url'),
+                            'ext': 'jpg',
+                            'webpage_url': entry.get('webpage_url')
+                        })
+                    else:
+                        media_list.append(_extract_item(entry))
             else:
                 media_list.append(_extract_item(info))
 
