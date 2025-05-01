@@ -1,4 +1,5 @@
 from yt_dlp import YoutubeDL
+import requests
 
 def download_from_url(url):
     try:
@@ -9,9 +10,19 @@ def download_from_url(url):
         }
         # Nếu là link từ X/Twitter => thêm cookie
         if 'x.com' in url or 'twitter.com' in url:
-            ydl_opts['cookiefile'] = 'https://r2.lam.io.vn/cookies/x_cookies.txt'
+            cookie_path = '/tmp/cookies.txt'
+            _download_cookie_once(
+                'https://r2.lam.io.vn/cookies/x_cookies.txt',
+                cookie_path
+            )
+            ydl_opts['cookiefile'] = cookie_path
         elif 'instagram.com' in url:
-            ydl_opts['cookiefile'] = 'https://r2.lam.io.vn/cookies/instagram_cookies.txt'
+            cookie_path = '/tmp/cookies.txt'
+            _download_cookie_once(
+                'https://r2.lam.io.vn/cookies/instagram_cookies.txt',
+                cookie_path
+            )
+            ydl_opts['cookiefile'] = cookie_path
         
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -24,6 +35,13 @@ def download_from_url(url):
         return {'status': 'ok', 'media': media_list}
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+def _download_cookie_once(remote_url, local_path):
+    if not os.path.exists(local_path):
+        resp = requests.get(remote_url)
+        if resp.ok:
+            with open(local_path, 'w', encoding='utf-8') as f:
+                f.write(resp.text)
 
 def _extract_item(info):
     return {
