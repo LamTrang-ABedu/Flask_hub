@@ -167,9 +167,6 @@ function showPreview(item) {
     if (id) {
       content = `<iframe src="https://www.xvideos.com/embedframe/${id}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
     }
-  } else if (videoURL.includes('pornhub.com/embed')) {
-    // Nếu URL đã là embed
-    content = `<iframe src="${videoURL}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
   } else {
     // Fallback: ảnh hoặc link
     content = thumb
