@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-def crawl(gallery_url="https://www.imagefap.com/pictures/9145312/Asian-Girls", limit=30):
+def crawl(gallery_url="https://www.imagefap.com/pics/2/amateur.php", limit=30):
     print(f"[Imagefap Crawler] Start crawling gallery: {gallery_url}")
     output_dir = "gallerydl_imagefap"
     os.makedirs(output_dir, exist_ok=True)
