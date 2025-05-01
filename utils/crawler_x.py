@@ -1,43 +1,34 @@
-import subprocess
-import os
+import requests
+from bs4 import BeautifulSoup
 
-def crawl(gallery_url="https://www.imagefap.com/pics/2/amateur.php", limit=30):
-    print(f"[Imagefap Crawler] Start crawling gallery: {gallery_url}")
-    output_dir = "gallerydl_imagefap"
-    os.makedirs(output_dir, exist_ok=True)
-
-    cmd = [
-        "gallery-dl",
-        gallery_url,
-        "--range", f"1-{limit}",
-        "--dest", output_dir,
-        "--download-archive", os.path.join(output_dir, "archive.txt"),
-        "--verbose"
-    ]
-
-    print(f"[Imagefap Crawler] Running command: {' '.join(cmd)}")
+def crawl(username="realgirlsvids", limit=20):
+    print(f"[XCancel Crawler] Crawling user: {username}")
+    url = f"https://xcancel.com/{username}/media"
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        print(f"[gallery-dl stdout]\n{result.stdout}")
-        print(f"[gallery-dl stderr]\n{result.stderr}")
-        if result.returncode != 0:
-            print(f"[Imagefap Crawler] gallery-dl exited with code {result.returncode}")
-            return []
+        res = requests.get(url, headers=headers, timeout=15)
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, "html.parser")
     except Exception as e:
-        print(f"[Imagefap Crawler] Exception: {e}")
+        print(f"[XCancel Crawler] Failed to fetch: {e}")
         return []
 
     results = []
-    for root, dirs, files in os.walk(output_dir):
-        for file in files:
-            if file.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".mp4")):
-                file_path = os.path.join(root, file)
-                results.append({
-                    "thumb": file_path,
-                    "video": file_path if file.lower().endswith(".mp4") else None,
-                    "title": file
-                })
+    items = soup.select("div.attachment.image > a[href], div.attachment.video > a[href]")[:limit]
 
-    print(f"[Imagefap Crawler] Found {len(results)} media files")
+    for item in items:
+        href = item.get("href")
+        thumb = item.find("img")["src"] if item.find("img") else None
+
+        if href:
+            results.append({
+                "thumb": thumb or href,
+                "video": href if href.endswith((".mp4", ".webm")) else None,
+                "title": "Media from XCancel"
+            })
+
+    print(f"[XCancel Crawler] Found {len(results)} media item(s).")
     return results
