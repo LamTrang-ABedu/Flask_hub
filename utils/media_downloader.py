@@ -7,7 +7,6 @@ def download_from_url(url):
         ydl_opts = {
             'quiet': True,
             'force_generic_extractor': False,
-            'skip_download': True,
         }
 
         # Twitter/X
