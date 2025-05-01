@@ -7,6 +7,12 @@ def download_from_url(url):
             'skip_download': True,
             'force_generic_extractor': False,
         }
+        # Nếu là link từ X/Twitter => thêm cookie
+        if 'x.com' in url or 'twitter.com' in url:
+            ydl_opts['cookiefile'] = 'https://r2.lam.io.vn/cookies/x_cookies.txt'
+        elif 'instagram.com' in url:
+            ydl_opts['cookiefile'] = 'https://r2.lam.io.vn/cookies/instagram_cookies.txt'
+        
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             media_list = []
