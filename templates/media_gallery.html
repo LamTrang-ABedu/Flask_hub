@@ -149,14 +149,8 @@ function showPreview(item) {
     content = thumb
       ? `<img src="${thumb}" alt="${title}">`
       : `<p>No media available.</p>`;
-  } else if (videoURL.includes('.m3u8')) {
-    content = `
-      <video id="hlsPlayer" controls poster="${thumb}" style="width: 100%; max-height: 480px;"></video>
-    `;
-  } else if (videoURL.endsWith('.mp4')) {
-    content = `
-      <video controls autoplay muted playsinline src="${videoURL}" poster="${thumb}" style="width: 100%; max-height: 480px;"></video>
-    `;
+  } else (item.ext === 'mp4' || videoURL.includes('.mp4')) {
+      content = `<video src="${videoURL}" controls style="width:100%;margin-top:8px;"></video>`;
   } else {
     content = `
       <img src="${thumb}" alt="${title}">
@@ -169,26 +163,6 @@ function showPreview(item) {
     ${content}
     ${postURL ? `<p><a href="${postURL}" target="_blank">Go to post</a></p>` : ""}
   `;
-
-  // Thực thi HLS sau khi DOM được render
-  if (videoURL && videoURL.includes('.m3u8')) {
-    const video = document.getElementById('hlsPlayer');
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(videoURL);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, function () {
-        video.play();
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = videoURL;
-      video.addEventListener('loadedmetadata', function () {
-        video.play();
-      });
-    } else {
-      video.outerHTML = '<p>Your browser does not support HLS playback.</p>';
-    }
-  }
 }
 </script>
 
