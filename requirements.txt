@@ -3,3 +3,4 @@ Faker
 snscrape
 yt-dlp
 telethon
+bs4
