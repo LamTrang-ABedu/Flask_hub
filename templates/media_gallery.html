@@ -138,51 +138,49 @@ async function loadGallery() {
 
 function showPreview(item) {
   const preview = document.getElementById('mediaPreview');
-  const videoURL = item.video;
   const title = item.title || 'Untitled';
-  const isMP4 = videoURL && videoURL.endsWith('.mp4');
-  const isRedgifs = videoURL && videoURL.includes('redgifs');
-  const isPornhub = videoURL && videoURL.includes('pornhub.com/view_video.php');
-  const isXvideos = videoURL && videoURL.includes('xvideos.com/video');
-  const isReddit = item.post_url && item.thumb && item.video === null;
+  const videoURL = item.video;
+  const thumb = item.thumb || '';
+  const postURL = item.post_url || item.webpage_url || '';
 
   let content = '';
 
-  if (isMP4 || isRedgifs) {
+  if (!videoURL) {
+    // Không có video, hiển thị ảnh nếu có
+    content = thumb
+      ? `<img src="${thumb}" alt="${title}">`
+      : `<p>No media available.</p>`;
+  } else if (videoURL.endsWith('.mp4')) {
+    // File mp4 → dùng video tag
     content = `
-      <video controls autoplay muted playsinline src="${videoURL}" poster="${item.thumb}"></video>
+      <video controls autoplay muted playsinline src="${videoURL}" poster="${thumb}"></video>
     `;
-  } else if (isPornhub) {
-    const match = videoURL.match(/viewkey=([a-zA-Z0-9]+)/);
-    let viewkey = match ? match[1] : null;
-    if (viewkey && !viewkey.startsWith('ph')) viewkey = 'ph' + viewkey;
-
-    if (viewkey) {
-      content = `<iframe src="https://www.pornhub.com/embed/${viewkey}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
-    } else {
-      content = `<p><strong>Unable to preview this video (invalid viewkey).</strong></p><img src="${item.thumb}" alt="${title}">`;
+  } else if (videoURL.includes('redgifs.com') && !videoURL.endsWith('.mp4')) {
+    // RedGifs embed
+    const id = videoURL.split('/watch/')[1]?.split('?')[0];
+    if (id) {
+      content = `<iframe src="https://redgifs.com/ifr/${id}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
     }
-  } else if (isXvideos) {
+  } else if (videoURL.includes('xvideos.com')) {
     const match = videoURL.match(/\/video(\d+)\//);
     const id = match ? match[1] : null;
     if (id) {
       content = `<iframe src="https://www.xvideos.com/embedframe/${id}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
-    } else {
-      content = `<p>Unable to extract video ID from Xvideos link.</p>`;
     }
-  } else if (isReddit) {
-    content = `
-      <img src="${item.thumb}" alt="${title}">
-      <p><a href="${item.post_url}" target="_blank">View on Reddit</a></p>
-    `;
+  } else if (videoURL.includes('pornhub.com/embed')) {
+    // Nếu URL đã là embed
+    content = `<iframe src="${videoURL}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
   } else {
-    content = `<img src="${item.thumb}" alt="${title}">`;
+    // Fallback: ảnh hoặc link
+    content = thumb
+      ? `<img src="${thumb}" alt="${title}"><p><a href="${videoURL}" target="_blank">View original</a></p>`
+      : `<p><a href="${videoURL}" target="_blank">Open media</a></p>`;
   }
 
   preview.innerHTML = `
     <h3>${title}</h3>
     ${content}
-    ${videoURL && !isReddit ? `<p><a href="${videoURL}" target="_blank">Open Original</a></p>` : ""}
+    ${postURL ? `<p><a href="${postURL}" target="_blank">Go to post</a></p>` : ""}
   `;
 }
 </script>
