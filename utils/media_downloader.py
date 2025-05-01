@@ -30,9 +30,9 @@ def download_from_url(url):
             )
             ydl_opts.update({
                 'cookiefile': cookie_path,
-                'format': 'mp4',  # không merge audio, lấy link trực tiếp
+                'skip_download': True,
                 'extract_flat': False,
-                'skip_download': True
+                'force_generic_extractor': False,
             })
 
         with YoutubeDL(ydl_opts) as ydl:
