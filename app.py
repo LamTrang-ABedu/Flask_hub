@@ -75,7 +75,7 @@ def api_instagram_gallery():
         return jsonify({"status": "error", "message": "Missing username"}), 400
 
     print(f"[Instagram Crawler] Crawling user: {username}")
-    media = crawl(username=username, limit=30)
+    media = crawl(tag=username, limit=30)
     if not media:
         return jsonify({"status": "error", "message": "No media found"}), 404
 
