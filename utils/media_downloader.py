@@ -23,7 +23,14 @@ def download_from_url(url):
                 'https://r2.lam.io.vn/cookies/instagram_cookies.txt',
                 cookie_path
             )
-            ydl_opts['cookiefile'] = cookie_path
+            # Cấu hình đặc biệt cho Instagram: merge audio + video
+            ydl_opts.update({
+                'cookiefile': cookie_path,
+                'format': 'bestvideo+bestaudio/best',
+                'merge_output_format': 'mp4',
+                'outtmpl': '/tmp/instagram_merged.%(ext)s',
+                'skip_download': False,
+            })
         
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -48,7 +55,7 @@ def _extract_item(info):
     source_url = info.get('webpage_url', '')
 
     # Áp dụng formats chỉ với X và Instagram
-    if 'x.com' in source_url or 'twitter.com' in source_url or 'instagram.com' in source_url:
+    if 'x.com' in source_url or 'twitter.com' in source_url:
         best_format = None
         if 'formats' in info:
             formats = [f for f in info['formats'] if f.get('ext') == 'mp4' and f.get('url')]
@@ -59,6 +66,15 @@ def _extract_item(info):
             'url': best_format.get('url') if best_format else info.get('url'),
             'thumbnail': info.get('thumbnail'),
             'ext': best_format.get('ext') if best_format else info.get('ext'),
+            'webpage_url': source_url
+        }
+    elif 'instagram.com' in source_url
+        # Instagram: lấy file local sau khi merge
+        return {
+            'title': info.get('title'),
+            'url': f"/tmp/instagram_merged.{info.get('ext', 'mp4')}",
+            'thumbnail': info.get('thumbnail'),
+            'ext': info.get('ext'),
             'webpage_url': source_url
         }
 
