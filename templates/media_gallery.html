@@ -1,7 +1,7 @@
 {% extends "index.html" %}
 {% block title %}Media Gallery{% endblock %}
 {% block content %}
-
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <h2>Media Gallery</h2>
 
 <label for="sourceSelect">Choose source:</label>
@@ -146,32 +146,40 @@ function showPreview(item) {
   let content = '';
 
   if (!videoURL) {
-    // Không có video, hiển thị ảnh nếu có
     content = thumb
       ? `<img src="${thumb}" alt="${title}">`
       : `<p>No media available.</p>`;
-  } else if (videoURL.endsWith('.mp4')) {
-    // File mp4 → dùng video tag
+  } else if (videoURL.includes('.m3u8')) {
     content = `
-      <video controls autoplay muted playsinline src="${videoURL}" poster="${thumb}"></video>
+      <video id="hlsPlayer" controls poster="${thumb}" style="width: 100%; max-height: 480px;"></video>
+      <script>
+        const video = document.getElementById('hlsPlayer');
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource("${videoURL}");
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            video.play();
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = "${videoURL}";
+          video.addEventListener('loadedmetadata', function () {
+            video.play();
+          });
+        } else {
+          video.outerHTML = '<p>Your browser does not support HLS playback.</p>';
+        }
+      </script>
     `;
-  } else if (videoURL.includes('redgifs.com') && !videoURL.endsWith('.mp4')) {
-    // RedGifs embed
-    const id = videoURL.split('/watch/')[1]?.split('?')[0];
-    if (id) {
-      content = `<iframe src="https://redgifs.com/ifr/${id}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
-    }
-  } else if (videoURL.includes('xvideos.com')) {
-    const match = videoURL.match(/\/video(\d+)\//);
-    const id = match ? match[1] : null;
-    if (id) {
-      content = `<iframe src="https://www.xvideos.com/embedframe/${id}" frameborder="0" width="100%" height="480" allowfullscreen></iframe>`;
-    }
+  } else if (videoURL.endsWith('.mp4')) {
+    content = `
+      <video controls autoplay muted playsinline src="${videoURL}" poster="${thumb}" style="width: 100%; max-height: 480px;"></video>
+    `;
   } else {
-    // Fallback: ảnh hoặc link
-    content = thumb
-      ? `<img src="${thumb}" alt="${title}"><p><a href="${videoURL}" target="_blank">View original</a></p>`
-      : `<p><a href="${videoURL}" target="_blank">Open media</a></p>`;
+    content = `
+      <img src="${thumb}" alt="${title}">
+      <p><a href="${videoURL}" target="_blank">View original</a></p>
+    `;
   }
 
   preview.innerHTML = `
