@@ -68,7 +68,7 @@ def _extract_item(info):
             'ext': best_format.get('ext') if best_format else info.get('ext'),
             'webpage_url': source_url
         }
-    elif 'instagram.com' in source_url
+    elif 'instagram.com' in source_url:
         # Instagram: lấy file local sau khi merge
         return {
             'title': info.get('title'),
