@@ -136,42 +136,68 @@ async function loadGallery() {
   }
 }
 
-function showPreview(item) {
+async function showPreview(item) {
   const preview = document.getElementById('mediaPreview');
   const title = item.title || 'Untitled';
-  const videoURL = item.video;
   const thumb = item.thumb || '';
-  const postURL = item.post_url || item.webpage_url || '';
+  const originalPage = item.webpage_url || item.post_url || '';
 
-  preview.innerHTML = `
-    <h3>${title}</h3>
-    <video id="mediaPlayer" controls poster="${thumb}" style="width: 100%; max-height: 480px;"></video>
-    ${postURL ? `<p><a href="${postURL}" target="_blank">Go to post</a></p>` : ""}
-  `;
+  preview.innerHTML = `<h3>${title}</h3><p>Loading video...</p>`;
 
-  const video = document.getElementById('mediaPlayer');
+  try {
+    const res = await fetch(`/api/universal-download?url=${encodeURIComponent(originalPage)}`);
+    const data = await res.json();
 
-  // Xử lý m3u8 hoặc mp4
-  if (videoURL.includes('.m3u8')) {
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(videoURL);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, function () {
-        video.play();
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = videoURL;
-      video.addEventListener('loadedmetadata', function () {
-        video.play();
-      });
-    } else {
-      video.outerHTML = '<p>Your browser does not support HLS playback.</p>';
+    if (data.status !== 'ok') {
+      preview.innerHTML = `<p style="color:red;">Failed to extract media: ${data.message}</p>`;
+      return;
     }
-  } else {
-    // MP4 hoặc link tĩnh khác
-    video.src = videoURL;
-    video.play();
+
+    const media = data.media[0];
+    const videoURL = media.url;
+    const ext = media.ext;
+
+    let content = '';
+
+    if (videoURL.includes('.m3u8')) {
+      content = `
+        <video id="mediaPlayer" controls poster="${media.thumbnail || thumb}" style="width: 100%; max-height: 480px;"></video>
+      `;
+    } else if (ext === 'mp4' || videoURL.endsWith('.mp4')) {
+      content = `
+        <video src="${videoURL}" controls autoplay muted playsinline poster="${media.thumbnail || thumb}" style="width: 100%; max-height: 480px;"></video>
+      `;
+    } else {
+      content = `
+        <img src="${videoURL}" alt="${title}" style="max-width: 100%; border-radius: 8px;">
+      `;
+    }
+
+    content += `<p><a href="${videoURL}" target="_blank" download>Download</a></p>`;
+    preview.innerHTML = `<h3>${title}</h3>${content}`;
+
+    // If .m3u8, attach HLS after render
+    if (videoURL.includes('.m3u8')) {
+      const video = document.getElementById('mediaPlayer');
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(videoURL);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          video.play();
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoURL;
+        video.addEventListener('loadedmetadata', function () {
+          video.play();
+        });
+      } else {
+        video.outerHTML = '<p>Your browser does not support HLS playback.</p>';
+      }
+    }
+
+  } catch (err) {
+    preview.innerHTML = `<p style="color:red;">Fetch error: ${err.message}</p>`;
   }
 }
 </script>
