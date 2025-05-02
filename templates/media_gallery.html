@@ -140,61 +140,33 @@ async function showPreview(item) {
   const preview = document.getElementById('mediaPreview');
   const title = item.title || 'Untitled';
   const thumb = item.thumb || '';
-  const originalPage = item.video || '';
+  const originalPage = item.video || item.webpage_url || item.post_url || '';
 
-  preview.innerHTML = `<h3>${title}</h3><p>Loading video...</p>`;
+  preview.innerHTML = `<h3>${title}</h3><p>Loading...</p>`;
 
   try {
     const res = await fetch(`/api/universal-download?url=${encodeURIComponent(originalPage)}`);
     const data = await res.json();
 
     if (data.status !== 'ok') {
-      preview.innerHTML = `<p style="color:red;">Failed to extract media: ${data.message}</p>`;
+      preview.innerHTML = `<p style="color:red;">Error: ${data.message}</p>`;
       return;
     }
 
     const media = data.media[0];
-    const videoURL = media.url;
+    const mediaURL = media.url;
     const ext = media.ext;
 
-    let content = '';
+    let html = `<p><strong>${media.title || title}</strong></p>`;
 
-    if (videoURL.includes('.m3u8')) {
-      content = `
-        <video id="mediaPlayer" controls poster="${media.thumbnail || thumb}" style="width: 100%; max-height: 480px;"></video>
-      `;
-    } else if (ext === 'mp4' || videoURL.endsWith('.mp4')) {
-      content = `
-        <video src="${videoURL}" controls autoplay muted playsinline poster="${media.thumbnail || thumb}" style="width: 100%; max-height: 480px;"></video>
-      `;
+    if (ext === 'mp4' || mediaURL.includes('.mp4') || mediaURL.includes('.m3u8')) {
+      html += `<video src="${mediaURL}" controls autoplay muted playsinline style="width:100%;margin-top:8px;" poster="${media.thumbnail || thumb}"></video>`;
     } else {
-      content = `
-        <img src="${videoURL}" alt="${title}" style="max-width: 100%; border-radius: 8px;">
-      `;
+      html += `<img src="${mediaURL}" style="width:100%;margin-top:8px;border-radius:4px;">`;
     }
 
-    content += `<p><a href="${videoURL}" target="_blank" download>Download</a></p>`;
-    preview.innerHTML = `<h3>${title}</h3>${content}`;
-
-    // If .m3u8, attach HLS after render
-    if (videoURL.includes('.m3u8')) {
-      const video = document.getElementById('mediaPlayer');
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(videoURL);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          video.play();
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = videoURL;
-        video.addEventListener('loadedmetadata', function () {
-          video.play();
-        });
-      } else {
-        video.outerHTML = '<p>Your browser does not support HLS playback.</p>';
-      }
-    }
+    html += `<a href="${mediaURL}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download</a>`;
+    preview.innerHTML = html;
 
   } catch (err) {
     preview.innerHTML = `<p style="color:red;">Fetch error: ${err.message}</p>`;
