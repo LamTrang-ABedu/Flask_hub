@@ -140,7 +140,7 @@ async function showPreview(item) {
   const preview = document.getElementById('mediaPreview');
   const title = item.title || 'Untitled';
   const thumb = item.thumb || '';
-  const originalPage = item.webpage_url || item.post_url || '';
+  const originalPage = item.video || '';
 
   preview.innerHTML = `<h3>${title}</h3><p>Loading video...</p>`;
 
