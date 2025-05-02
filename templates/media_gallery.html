@@ -145,7 +145,7 @@ async function showPreview(item) {
   preview.innerHTML = `<h3>${title}</h3><p>Loading video...</p>`;
 
   try {
-    const res = await fetch(`/api/universal-download?url=${originalPage}`);
+    const res = await fetch(`/api/universal-download?url=${encodeURIComponent(originalPage)}`);
     const data = await res.json();
 
     if (data.status !== 'ok') {
