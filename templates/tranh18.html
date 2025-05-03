@@ -16,7 +16,7 @@
     </div>
 
     <div class="flex h-screen">
-      <div id="chapter-content" class="flex-1 overflow-auto bg-black text-white p-0"></div>
+      <div id="chapter-content" class="flex-1 overflow-auto bg-black text-white p-0 m-0"></div>
 
       <div class="w-[300px] bg-gray-100 p-4 flex-col hidden md:flex">
         <div class="flex justify-between items-center mb-4">
@@ -31,7 +31,6 @@
       </div>
     </div>
 
-    <!-- Nút lên đầu -->
     <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
       class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow">
       ↑ Top
@@ -115,10 +114,8 @@ function renderChapterContent() {
   chap.images.forEach(img => {
     const image = document.createElement('img');
     image.src = `/proxy-image?url=${encodeURIComponent(img)}`;
-    image.className = 'w-full';
+    image.className = 'chapter-image';
     image.loading = 'lazy';
-    image.style.margin = '0';
-    image.style.borderRadius = '0';
     image.onerror = () => {
       image.onerror = null;
       image.src = img;
@@ -151,17 +148,29 @@ fetch(R2_JSON_URL)
 </script>
 
 <style>
+#chapter-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.chapter-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
 @media (max-width: 768px) {
-  .w-\\[300px\\] { display: none; }
+  .w-\[300px\] { display: none !important; }
   #reader .flex { flex-direction: column; }
-  #chapter-content { padding-top: 0; min-height: 300px; }
   #sp-nav { display: flex !important; }
-  #chapter-content img {
-    display: block;
+  .chapter-image {
     width: 100vw;
-    height: auto;
     border-radius: 0 !important;
-    margin: 0 auto;
+  }
+  #chapter-content {
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 </style>
