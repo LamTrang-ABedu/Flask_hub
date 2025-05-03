@@ -2,40 +2,19 @@
 {% block title %}Tranh18 Reader{% endblock %}
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
-<style>
-@media (max-width: 768px) {
-  #chapter-sidebar {
-    display: none;
-  }
-
-  #chapter-content {
-    padding-top: 60px;
-  }
-}
-</style>
 <div class="p-4">
   <h1 class="text-2xl font-bold mb-6">Thư viện truyện Tranh18</h1>
   <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
 
   <div id="reader" class="hidden">
-    
-<!-- Header điều hướng chương -->
-<div id="chapter-header" class="sticky top-0 bg-white z-50 px-4 py-2 flex items-center justify-between shadow md:hidden">
-  <button onclick="prevChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">← Trước</button>
-  <select id="chapterSelect" onchange="jumpChapter()" class="px-2 py-1 border rounded text-sm">
-    <!-- option chương sẽ được inject -->
-  </select>
-  <button onclick="nextChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">Sau →</button>
-</div>
-
-<div class="flex h-screen">
+    <div class="flex h-screen">
       <!-- Vùng hiển thị nội dung ảnh -->
       <div id="chapter-content" class="flex-1 overflow-auto bg-black text-white p-2">
         <!-- Ảnh chapter sẽ được inject vào đây bằng JS -->
       </div>
 
       <!-- Sidebar bên phải -->
-      <div id="chapter-sidebar" class="w-[300px] bg-gray-100 p-4 flex flex-col">
+      <div class="w-[300px] bg-gray-100 p-4 flex flex-col">
         <!-- Điều hướng chương -->
         <div class="flex justify-between items-center mb-4">
           <button onclick="prevChapter()" class="px-2 py-1 bg-gray-300 rounded">← Chương trước</button>
@@ -94,17 +73,6 @@ function openComic(index) {
 }
 
 function renderChapterList() {
-  const select = document.getElementById('chapterSelect');
-  if (select) {
-    select.innerHTML = '';
-    currentComic.chapters.forEach((chap, idx) => {
-      const opt = document.createElement('option');
-      opt.value = idx;
-      opt.textContent = chap.name;
-      if (idx === currentChapterIndex) opt.selected = true;
-      select.appendChild(opt);
-    });
-  }
   const list = document.getElementById('chapter-list');
   list.innerHTML = '';
   currentComic.chapters.forEach((chap, idx) => {
@@ -120,8 +88,6 @@ function renderChapterList() {
   });
 }
 
-
-
 function renderChapterContent() {
   const chap = currentComic.chapters[currentChapterIndex];
   document.getElementById('chapter-title').textContent = chap.name;
@@ -133,14 +99,9 @@ function renderChapterContent() {
     image.src = `/proxy-image?url=${encodeURIComponent(img)}`;
     image.className = 'rounded shadow mb-2 mx-auto';
     image.loading = 'lazy';
-    image.onerror = () => {
-      image.onerror = null;
-      image.src = img; // fallback
-    };
     content.appendChild(image);
   });
 }
-
 
 function prevChapter() {
   if (currentChapterIndex > 0) {
@@ -149,17 +110,6 @@ function prevChapter() {
     renderChapterContent();
   }
 }
-
-
-function jumpChapter() {
-  const idx = parseInt(document.getElementById('chapterSelect').value);
-  if (!isNaN(idx)) {
-    currentChapterIndex = idx;
-    renderChapterList();
-    renderChapterContent();
-  }
-}
-
 
 function nextChapter() {
   if (currentChapterIndex < currentComic.chapters.length - 1) {
@@ -176,16 +126,5 @@ fetch(R2_JSON_URL)
     renderComicList();
   })
   .catch(err => alert('Không thể tải dữ liệu truyện'));
-
-<style>
-@media (max-width: 768px) {
-  #chapter-sidebar {
-    display: none;
-  }
-
-  #chapter-content {
-    padding-top: 60px;
-  }
-}
-</style>
+</script>
 {% endblock %}
