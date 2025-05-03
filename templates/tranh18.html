@@ -7,13 +7,11 @@
   .w-\[300px\] {
     display: none;
   }
-
   #chapter-content {
     padding-top: 60px;
   }
 }
 </style>
-
 </script>
 <style>
 @media (max-width: 768px) {
@@ -31,7 +29,7 @@
   <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
 
   
-<!-- Mobile Fixed Header -->
+<!-- Mobile Chapter Header -->
 <div id="chapter-header" class="sticky top-0 z-50 bg-white px-4 py-2 flex items-center justify-between shadow md:hidden hidden">
   <button onclick="prevChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">← Trước</button>
   <select id="chapterSelect" onchange="jumpChapter()" class="px-2 py-1 border rounded text-sm"></select>
@@ -118,11 +116,13 @@ function openComic(index) {
 function renderChapterList() {
   const list = document.getElementById('chapter-list');
   list.innerHTML = '';
+
   const select = document.getElementById('chapterSelect');
   if (select) select.innerHTML = '';
+
   currentComic.chapters.forEach((chap, idx) => {
     const div = document.createElement('div');
-    div.className = `mb-1 p-1 cursor-pointer rounded ${idx === currentChapterIndex ? 'bg-blue-200 font-semibold' : 'hover:bg-gray-100'}`;
+    div.className = \`mb-1 p-1 cursor-pointer rounded \${idx === currentChapterIndex ? 'bg-blue-200 font-semibold' : 'hover:bg-gray-100'}\`;
     div.textContent = chap.name;
     div.onclick = () => {
       currentChapterIndex = idx;
@@ -140,13 +140,49 @@ function renderChapterList() {
     }
   });
 
-  // Show chapter header on mobile
   const header = document.getElementById('chapter-header');
   if (header) header.classList.remove('hidden');
 }
 
-function
- renderChapterContent() {
+function jumpChapter() {
+  const idx = parseInt(document.getElementById('chapterSelect').value);
+  if (!isNaN(idx)) {
+    currentChapterIndex = idx;
+    renderChapterList();
+    renderChapterContent();
+  }
+}
+
+
+function {
+  const select = document.getElementById('chapterSelect');
+  if (select) {
+    select.innerHTML = '';
+    currentComic.chapters.forEach((chap, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = chap.name;
+      if (idx === currentChapterIndex) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+  const list = document.getElementById('chapter-list');
+  list.innerHTML = '';
+  currentComic.chapters.forEach((chap, idx) => {
+    const div = document.createElement('div');
+    div.className = `mb-1 p-1 cursor-pointer rounded ${idx === currentChapterIndex ? 'bg-blue-200 font-semibold' : 'hover:bg-gray-100'}`;
+    div.textContent = chap.name;
+    div.onclick = () => {
+      currentChapterIndex = idx;
+      renderChapterList();
+      renderChapterContent();
+    };
+    list.appendChild(div);
+  });
+}
+
+
+function renderChapterContent() {
   const chap = currentComic.chapters[currentChapterIndex];
   document.getElementById('chapter-title').textContent = chap.name;
 
@@ -160,6 +196,10 @@ function
     image.onerror = () => {
       image.onerror = null;
       image.src = img; // fallback to direct
+    };
+    image.onerror = () => {
+      image.onerror = null;
+      image.src = img;
     };
     content.appendChild(image);
   });
@@ -182,17 +222,6 @@ function prevChapter() {
     renderChapterContent();
   }
 }
-
-
-function jumpChapter() {
-  const idx = parseInt(document.getElementById('chapterSelect').value);
-  if (!isNaN(idx)) {
-    currentChapterIndex = idx;
-    renderChapterList();
-    renderChapterContent();
-  }
-}
-
 
 
 function jumpChapter() {
