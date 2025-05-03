@@ -3,23 +3,23 @@
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
 
-<div class="p-4">
-  <h1 class="text-2xl font-bold mb-6">Thư viện truyện Tranh18</h1>
-  <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
+<div class="px-0 pt-4">
+  <h1 class="text-2xl font-bold mb-6 text-center">Thư viện truyện Tranh18</h1>
+  <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 px-4"></div>
 
   <div id="reader" class="hidden relative">
-    <!-- Điều hướng cho mobile -->
-    <div id="sp-nav" class="sticky top-0 z-50 bg-white px-4 py-2 flex items-center justify-between shadow md:hidden hidden">
+    <!-- Điều hướng SP -->
+    <div id="sp-nav" class="sticky top-0 z-50 bg-white px-4 py-2 hidden items-center justify-between shadow md:hidden">
       <button onclick="prevChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">←</button>
       <select id="chapterSelect" onchange="jumpChapter()" class="px-2 py-1 border rounded text-sm"></select>
       <button onclick="nextChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">→</button>
     </div>
 
     <div class="flex h-screen">
-      <!-- Ảnh nội dung chương -->
+      <!-- Ảnh chương -->
       <div id="chapter-content" class="flex-1 overflow-auto bg-black text-white p-2"></div>
 
-      <!-- Sidebar (chỉ PC) -->
+      <!-- Sidebar chương PC -->
       <div class="w-[300px] bg-gray-100 p-4 flex-col hidden md:flex">
         <div class="flex justify-between items-center mb-4">
           <button onclick="prevChapter()" class="px-2 py-1 bg-gray-300 rounded">← Chương trước</button>
@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <!-- Nút Top -->
+    <!-- Nút lên đầu -->
     <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
       class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow">
       ↑ Top
@@ -69,6 +69,7 @@ function openComic(index) {
   currentChapterIndex = 0;
   document.getElementById('comic-list').classList.add('hidden');
   document.getElementById('reader').classList.remove('hidden');
+  if (window.innerWidth < 768) document.getElementById('sp-nav').classList.remove('hidden');
   renderChapterList(); renderChapterContent(); updateChapterSelect();
 }
 
@@ -116,7 +117,8 @@ function renderChapterContent() {
   chap.images.forEach(img => {
     const image = document.createElement('img');
     image.src = `/proxy-image?url=${encodeURIComponent(img)}`;
-    image.className = 'rounded shadow mb-2 mx-auto';
+    image.className = 'rounded shadow mb-2';
+    image.style.width = '100%';
     image.loading = 'lazy';
     image.onerror = () => {
       image.onerror = null;
@@ -154,6 +156,11 @@ fetch(R2_JSON_URL)
   .w-\\[300px\\] { display: none; }
   #reader .flex { flex-direction: column; }
   #chapter-content { padding-top: 8px; min-height: 300px; }
+  #sp-nav { display: flex !important; }
+  #chapter-content img {
+    width: 100%;
+    height: auto;
+  }
 }
 </style>
 {% endblock %}
