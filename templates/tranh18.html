@@ -3,45 +3,23 @@
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
 
-<style>
-  #chapter-content {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
+<div id="reader-wrapper" class="w-full">
+  <div class="text-center text-2xl font-bold mt-4">Thư viện truyện Tranh18</div>
 
-  #chapter-content img {
-    width: 100% !important;
-    height: auto;
-  }
+  <!-- Điều hướng chương (luôn ở top khi đọc truyện) -->
+  <div id="chapter-nav" class="hidden sm:flex justify-center items-center gap-2 p-2 mt-4 flex-wrap sticky top-0 bg-white z-10">
+    <button onclick="prevChapter()" class="bg-gray-200 px-3 py-1 rounded">←</button>
+    <select id="chapter-select" onchange="changeChapter(this.value)" class="border rounded px-2 py-1"></select>
+    <button onclick="nextChapter()" class="bg-gray-200 px-3 py-1 rounded">→</button>
+  </div>
 
-  @media (min-width: 768px) {
-    #chapter-content img {
-      width: auto !important;
-      max-width: 100%;
-    }
-  }
+  <!-- Danh sách truyện -->
+  <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 p-4"></div>
 
-  body {
-    overflow-x: hidden;
-  }
-</style>
-
-<div class="w-full">
-  <h1 class="text-2xl font-bold mb-6 text-center">Thư viện truyện Tranh18</h1>
-  <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 px-2"></div>
-
-  <div id="reader" class="hidden w-full">
-    <!-- Điều hướng chương -->
-    <div id="chapter-nav" class="flex justify-between items-center gap-2 p-2 bg-white sticky top-0 z-10">
-      <button onclick="prevChapter()" class="px-3 py-1 bg-gray-200 rounded text-lg">←</button>
-      <select id="chapter-select" onchange="onChapterSelect()" class="flex-1 p-1 border rounded text-center text-sm"></select>
-      <button onclick="nextChapter()" class="px-3 py-1 bg-gray-200 rounded text-lg">→</button>
-    </div>
-
-    <div id="chapter-content" class="w-full overflow-auto bg-black text-white"></div>
-
-    <!-- Back to top -->
-    <button onclick="scrollToTop()" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-md">↑ Top</button>
+  <!-- Vùng đọc truyện -->
+  <div id="reader" class="hidden">
+    <div id="chapter-content" class="bg-black text-white w-full"></div>
+    <button onclick="scrollToTop()" class="fixed bottom-4 right-4 bg-blue-600 text-white rounded-full px-4 py-2 shadow-md z-20">↑ Top</button>
   </div>
 </div>
 
@@ -51,9 +29,18 @@ let comics = [];
 let currentComic = null;
 let currentChapterIndex = 0;
 
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function backToList() {
   document.getElementById('reader').classList.add('hidden');
   document.getElementById('comic-list').classList.remove('hidden');
+  document.getElementById('chapter-nav').classList.add('hidden');
   currentComic = null;
 }
 
@@ -77,50 +64,46 @@ function openComic(index) {
   currentChapterIndex = 0;
   document.getElementById('comic-list').classList.add('hidden');
   document.getElementById('reader').classList.remove('hidden');
-  renderChapterList();
+  document.getElementById('chapter-nav').classList.remove('hidden');
+  renderChapterSelect();
   renderChapterContent();
 }
 
-function renderChapterList() {
+function renderChapterSelect() {
   const select = document.getElementById('chapter-select');
   select.innerHTML = '';
   currentComic.chapters.forEach((chap, idx) => {
     const option = document.createElement('option');
     option.value = idx;
-    option.textContent = chap.name;
+    option.textContent = `${currentComic.name} ${chap.name}`;
     if (idx === currentChapterIndex) option.selected = true;
     select.appendChild(option);
   });
 }
 
+function changeChapter(index) {
+  currentChapterIndex = parseInt(index);
+  renderChapterSelect();
+  renderChapterContent();
+}
+
 function renderChapterContent() {
   const chap = currentComic.chapters[currentChapterIndex];
-  const title = document.getElementById('chapter-select');
-  if (title) title.value = currentChapterIndex;
-
   const content = document.getElementById('chapter-content');
   content.innerHTML = '';
   chap.images.forEach(img => {
     const image = document.createElement('img');
     image.src = `/proxy-image?url=${encodeURIComponent(img)}`;
+    image.className = isMobile() ? 'w-full mb-2' : 'mx-auto mb-2';
     image.loading = 'lazy';
     content.appendChild(image);
   });
 }
 
-function onChapterSelect() {
-  const idx = parseInt(document.getElementById('chapter-select').value);
-  if (!isNaN(idx)) {
-    currentChapterIndex = idx;
-    renderChapterList();
-    renderChapterContent();
-  }
-}
-
 function prevChapter() {
   if (currentChapterIndex > 0) {
     currentChapterIndex--;
-    renderChapterList();
+    renderChapterSelect();
     renderChapterContent();
   }
 }
@@ -128,13 +111,9 @@ function prevChapter() {
 function nextChapter() {
   if (currentChapterIndex < currentComic.chapters.length - 1) {
     currentChapterIndex++;
-    renderChapterList();
+    renderChapterSelect();
     renderChapterContent();
   }
-}
-
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 fetch(R2_JSON_URL)
