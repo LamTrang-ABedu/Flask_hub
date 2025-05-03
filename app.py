@@ -1,7 +1,7 @@
 import json
 import os
-import threading
-from flask import Flask, render_template, request, jsonify
+import requests
+from flask import Flask, render_template, request, jsonify, Response
 from utils.profile_faker import generate_profile
 from utils.gallery_fetcher import fetch_media
 from utils.media_downloader import download_from_url
@@ -12,6 +12,7 @@ from utils.proxy_fetcher import load_proxies
 from utils.keepalive_bot import start_keepalive_bot
 from utils.r2_fetcher import fetch_media_from_r2
 from utils.crawler_x import crawl
+from urllib.parse import unquote
 
 start_keepalive_bot()
 
@@ -119,6 +120,29 @@ def proxy_fetcher_page():
 def api_proxies():
     proxies = load_proxies()
     return jsonify({'proxies': proxies})
+
+@app.route("/tranh18")
+def tranh18():
+    return render_template("tranh18.html")
+
+@app.route("/proxy-image")
+def proxy_image():
+    raw_url = request.args.get("url")
+    if not raw_url:
+        return "Missing URL", 400
+
+    try:
+        url = unquote(raw_url)  # ✅ DECODE URL
+        if "tranh18" not in url:
+            return "Forbidden", 403
+
+        headers = {"Referer": "https://tranh18x.com"}
+        r = requests.get(url, headers=headers, stream=True, timeout=10)
+
+        return Response(r.content, content_type=r.headers.get("Content-Type", "image/jpeg"))
+    except Exception as e:
+        return f"Error: {e}", 500
     
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
