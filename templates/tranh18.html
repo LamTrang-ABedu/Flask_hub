@@ -1,86 +1,49 @@
 {% extends 'index.html' %}
 {% block title %}Tranh18 Reader{% endblock %}
 {% block content %}
-<script src="https://cdn.tailwindcss.com">
-<style>
-@media (max-width: 768px) {
-  .w-\[300px\] {
-    display: none;
-  }
-  #chapter-content {
-    padding-top: 60px;
-  }
-}
-</style>
-</script>
-<style>
-@media (max-width: 768px) {
-  #chapter-sidebar {
-    display: none;
-  }
+<script src="https://cdn.tailwindcss.com"></script>
 
-  #chapter-content {
-    padding-top: 60px;
-  }
-}
-</style>
 <div class="p-4">
   <h1 class="text-2xl font-bold mb-6">Thư viện truyện Tranh18</h1>
   <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4"></div>
 
-  
-<!-- Mobile Chapter Header -->
-<div id="chapter-header" class="sticky top-0 z-50 bg-white px-4 py-2 flex items-center justify-between shadow md:hidden hidden">
-  <button onclick="prevChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">← Trước</button>
-  <select id="chapterSelect" onchange="jumpChapter()" class="px-2 py-1 border rounded text-sm"></select>
-  <button onclick="nextChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">Sau →</button>
-</div>
+  <div id="reader" class="hidden relative">
+    <!-- Điều hướng cho mobile -->
+    <div id="sp-nav" class="sticky top-0 z-50 bg-white px-4 py-2 flex items-center justify-between shadow md:hidden hidden">
+      <button onclick="prevChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">←</button>
+      <select id="chapterSelect" onchange="jumpChapter()" class="px-2 py-1 border rounded text-sm"></select>
+      <button onclick="nextChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">→</button>
+    </div>
 
-<div id="reader" class="hidden">
-    
-<!-- Header điều hướng chương -->
-<div id="chapter-header" class="sticky top-0 bg-white z-50 px-4 py-2 flex items-center justify-between shadow md:hidden">
-  <button onclick="prevChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">← Trước</button>
-  <select id="chapterSelect" onchange="jumpChapter()" class="px-2 py-1 border rounded text-sm">
-    <!-- option chương sẽ được inject -->
-  </select>
-  <button onclick="nextChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">Sau →</button>
-</div>
+    <div class="flex h-screen">
+      <!-- Ảnh nội dung chương -->
+      <div id="chapter-content" class="flex-1 overflow-auto bg-black text-white p-2"></div>
 
-<div class="flex h-screen">
-      <!-- Vùng hiển thị nội dung ảnh -->
-      <div id="chapter-content" class="flex-1 overflow-auto bg-black text-white p-2">
-        <!-- Ảnh chapter sẽ được inject vào đây bằng JS -->
-      </div>
-
-      <!-- Sidebar bên phải -->
-      <div id="chapter-sidebar" class="w-[300px] bg-gray-100 p-4 flex flex-col">
-        <!-- Điều hướng chương -->
+      <!-- Sidebar (chỉ PC) -->
+      <div class="w-[300px] bg-gray-100 p-4 flex-col hidden md:flex">
         <div class="flex justify-between items-center mb-4">
           <button onclick="prevChapter()" class="px-2 py-1 bg-gray-300 rounded">← Chương trước</button>
           <div id="chapter-title" class="font-bold text-center text-sm flex-1">Chapter Title</div>
           <button onclick="nextChapter()" class="px-2 py-1 bg-gray-300 rounded">Chương sau →</button>
         </div>
-
-        <!-- Danh sách chương -->
         <div class="overflow-y-auto border-t pt-2 flex-1">
-          <div id="chapter-list" class="space-y-1">
-            <!-- inject danh sách chương ở đây -->
-          </div>
+          <div id="chapter-list" class="space-y-1"></div>
         </div>
-
-        <!-- Quay lại danh sách truyện -->
-        <button onclick="backToList()" class="mt-4 px-3 py-1 bg-gray-300 rounded">← Quay lại danh sách truyện</button>
+        <button onclick="backToList()" class="mt-4 px-3 py-1 bg-gray-300 rounded">← Quay lại danh sách</button>
       </div>
     </div>
+
+    <!-- Nút Top -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+      class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow">
+      ↑ Top
+    </button>
   </div>
 </div>
 
 <script>
 const R2_JSON_URL = 'https://r2.lam.io.vn/comics/tranh18.json';
-let comics = [];
-let currentComic = null;
-let currentChapterIndex = 0;
+let comics = [], currentComic = null, currentChapterIndex = 0;
 
 function backToList() {
   document.getElementById('reader').classList.add('hidden');
@@ -94,10 +57,8 @@ function renderComicList() {
   comics.forEach((comic, idx) => {
     const div = document.createElement('div');
     div.className = 'cursor-pointer hover:opacity-90 transition border rounded overflow-hidden shadow';
-    div.innerHTML = `
-      <img src="${comic.image}" alt="${comic.name}" class="w-full h-[220px] object-cover"/>
-      <div class="p-1 text-sm font-medium text-center line-clamp-2">${comic.name}</div>
-    `;
+    div.innerHTML = `<img src="${comic.image}" alt="${comic.name}" class="w-full h-[220px] object-cover"/>
+                     <div class="p-1 text-sm font-medium text-center line-clamp-2">${comic.name}</div>`;
     div.onclick = () => openComic(idx);
     container.appendChild(div);
   });
@@ -108,64 +69,10 @@ function openComic(index) {
   currentChapterIndex = 0;
   document.getElementById('comic-list').classList.add('hidden');
   document.getElementById('reader').classList.remove('hidden');
-  renderChapterList();
-  renderChapterContent();
+  renderChapterList(); renderChapterContent(); updateChapterSelect();
 }
-
 
 function renderChapterList() {
-  const list = document.getElementById('chapter-list');
-  list.innerHTML = '';
-
-  const select = document.getElementById('chapterSelect');
-  if (select) select.innerHTML = '';
-
-  currentComic.chapters.forEach((chap, idx) => {
-    const div = document.createElement('div');
-    div.className = \`mb-1 p-1 cursor-pointer rounded \${idx === currentChapterIndex ? 'bg-blue-200 font-semibold' : 'hover:bg-gray-100'}\`;
-    div.textContent = chap.name;
-    div.onclick = () => {
-      currentChapterIndex = idx;
-      renderChapterList();
-      renderChapterContent();
-    };
-    list.appendChild(div);
-
-    if (select) {
-      const opt = document.createElement('option');
-      opt.value = idx;
-      opt.textContent = chap.name;
-      if (idx === currentChapterIndex) opt.selected = true;
-      select.appendChild(opt);
-    }
-  });
-
-  const header = document.getElementById('chapter-header');
-  if (header) header.classList.remove('hidden');
-}
-
-function jumpChapter() {
-  const idx = parseInt(document.getElementById('chapterSelect').value);
-  if (!isNaN(idx)) {
-    currentChapterIndex = idx;
-    renderChapterList();
-    renderChapterContent();
-  }
-}
-
-
-function {
-  const select = document.getElementById('chapterSelect');
-  if (select) {
-    select.innerHTML = '';
-    currentComic.chapters.forEach((chap, idx) => {
-      const opt = document.createElement('option');
-      opt.value = idx;
-      opt.textContent = chap.name;
-      if (idx === currentChapterIndex) opt.selected = true;
-      select.appendChild(opt);
-    });
-  }
   const list = document.getElementById('chapter-list');
   list.innerHTML = '';
   currentComic.chapters.forEach((chap, idx) => {
@@ -174,37 +81,41 @@ function {
     div.textContent = chap.name;
     div.onclick = () => {
       currentChapterIndex = idx;
-      renderChapterList();
-      renderChapterContent();
+      renderChapterList(); renderChapterContent(); updateChapterSelect();
     };
     list.appendChild(div);
   });
 }
 
+function updateChapterSelect() {
+  const select = document.getElementById('chapterSelect');
+  if (!select) return;
+  select.innerHTML = '';
+  currentComic.chapters.forEach((chap, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = chap.name;
+    if (idx === currentChapterIndex) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+function jumpChapter() {
+  const idx = parseInt(document.getElementById('chapterSelect').value);
+  if (!isNaN(idx)) {
+    currentChapterIndex = idx;
+    renderChapterList(); renderChapterContent(); updateChapterSelect();
+  }
+}
 
 function renderChapterContent() {
   const chap = currentComic.chapters[currentChapterIndex];
   document.getElementById('chapter-title').textContent = chap.name;
-
   const content = document.getElementById('chapter-content');
   content.innerHTML = '';
   chap.images.forEach(img => {
     const image = document.createElement('img');
     image.src = `/proxy-image?url=${encodeURIComponent(img)}`;
-    image.className = 'rounded shadow mb-2 mx-auto';
-    image.loading = 'lazy';
-    image.onerror = () => {
-      image.onerror = null;
-      image.src = img; // fallback to direct
-    };
-    image.onerror = () => {
-      image.onerror = null;
-      image.src = img;
-    };
-    content.appendChild(image);
-  });
-}
-`;
     image.className = 'rounded shadow mb-2 mx-auto';
     image.loading = 'lazy';
     image.onerror = () => {
@@ -218,27 +129,14 @@ function renderChapterContent() {
 function prevChapter() {
   if (currentChapterIndex > 0) {
     currentChapterIndex--;
-    renderChapterList();
-    renderChapterContent();
+    renderChapterList(); renderChapterContent(); updateChapterSelect();
   }
 }
-
-
-function jumpChapter() {
-  const idx = parseInt(document.getElementById('chapterSelect').value);
-  if (!isNaN(idx)) {
-    currentChapterIndex = idx;
-    renderChapterList();
-    renderChapterContent();
-  }
-}
-
 
 function nextChapter() {
   if (currentChapterIndex < currentComic.chapters.length - 1) {
     currentChapterIndex++;
-    renderChapterList();
-    renderChapterContent();
+    renderChapterList(); renderChapterContent(); updateChapterSelect();
   }
 }
 
@@ -249,16 +147,13 @@ fetch(R2_JSON_URL)
     renderComicList();
   })
   .catch(err => alert('Không thể tải dữ liệu truyện'));
+</script>
 
 <style>
 @media (max-width: 768px) {
-  #chapter-sidebar {
-    display: none;
-  }
-
-  #chapter-content {
-    padding-top: 60px;
-  }
+  .w-\\[300px\\] { display: none; }
+  #reader .flex { flex-direction: column; }
+  #chapter-content { padding-top: 8px; min-height: 300px; }
 }
 </style>
 {% endblock %}
