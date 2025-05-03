@@ -132,14 +132,29 @@ def proxy_image():
         return "Missing URL", 400
 
     try:
-        url = unquote(raw_url)  # ✅ DECODE URL
-        if "tranh18" not in url:
+        url = unquote(raw_url)
+        parsed = urlparse(url)
+        domain = parsed.netloc
+
+        # Chỉ cho phép proxy ảnh từ các domain hợp lệ
+        allowed_domains = {
+            "tranh18x.com": "https://tranh18x.com",
+            "manhwa18.net": "https://manhwa18.net",
+            "static.manhwa18.net": "https://manhwa18.net",
+        }
+
+        referer = allowed_domains.get(domain)
+        if not referer:
             return "Forbidden", 403
 
-        headers = {"Referer": "https://tranh18x.com"}
-        r = requests.get(url, headers=headers, stream=True, timeout=10)
+        headers = {
+            "Referer": referer,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        }
 
+        r = requests.get(url, headers=headers, stream=True, timeout=10)
         return Response(r.content, content_type=r.headers.get("Content-Type", "image/jpeg"))
+
     except Exception as e:
         return f"Error: {e}", 500
     
