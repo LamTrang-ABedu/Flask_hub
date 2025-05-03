@@ -133,6 +133,12 @@ def proxy_image():
 
     try:
         url = unquote(raw_url)
+        
+        if "tranh18" in url:
+            headers = {"Referer": "https://tranh18x.com"}
+            r = requests.get(url, headers=headers, stream=True, timeout=10)
+    
+            return Response(r.content, content_type=r.headers.get("Content-Type", "image/jpeg"))
         parsed = urlparse(url)
         domain = parsed.netloc
 
