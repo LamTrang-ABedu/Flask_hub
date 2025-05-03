@@ -138,8 +138,8 @@ def proxy_image():
 
         # Chỉ cho phép proxy ảnh từ các domain hợp lệ
         allowed_domains = {
-            "tranh18x.com": "https://tranh18x.com",
-            "cdn600.tranh18.com": "https://tranh18x.com",
+            "tranh18.com": "https://tranh18.com",
+            "cdn600.tranh18.com": "https://tranh18.com",
             "manhwa18.net": "https://manhwa18.net",
             "static.manhwa18.net": "https://manhwa18.net",
         }
