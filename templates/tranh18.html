@@ -121,6 +121,7 @@ function renderChapterList() {
 }
 
 
+
 function renderChapterContent() {
   const chap = currentComic.chapters[currentChapterIndex];
   document.getElementById('chapter-title').textContent = chap.name;
@@ -134,17 +135,12 @@ function renderChapterContent() {
     image.loading = 'lazy';
     image.onerror = () => {
       image.onerror = null;
-      image.src = img; // fallback to direct
+      image.src = img; // fallback
     };
     content.appendChild(image);
   });
 }
-`;
-    image.className = 'rounded shadow mb-2 mx-auto';
-    image.loading = 'lazy';
-    content.appendChild(image);
-  });
-}
+
 
 function prevChapter() {
   if (currentChapterIndex > 0) {
