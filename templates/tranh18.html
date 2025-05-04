@@ -4,9 +4,18 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <div class="pt-4 sm:pt-0">
-  <h1 class="text-2xl font-bold mb-6 text-center">Thư viện truyện Tranh18</h1>
+  <!-- <h1 class="text-2xl font-bold mb-6 text-center">Thư viện truyện Tranh18</h1> -->
+  <div id="filter" class="px-4 mb-4 flex flex-wrap items-center gap-2">
+    <input id="filterInput" type="text" placeholder="Lọc theo tên truyện..." class="w-full sm:w-auto flex-1 border px-3 py-2 rounded shadow-sm" oninput="filterComics()">
+    <button onclick="resetFilter()" class="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm">Reset</button>
+  </div>
   <div id="comic-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 px-4"></div>
-
+  <div id="loading-spinner" class="text-center my-4">
+    <svg class="animate-spin h-6 w-6 text-blue-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+  </div>
   <div id="reader" class="hidden relative">
     <!-- Điều hướng SP -->
     <div id="sp-nav" class="sticky top-0 z-50 bg-white px-4 py-2 hidden items-center justify-between shadow md:hidden">
@@ -41,31 +50,65 @@
 <script>
 const R2_JSON_URL = 'https://r2.lam.io.vn/comics/tranh18.json';
 let comics = [], currentComic = null, currentChapterIndex = 0;
-
+let loadedCount = 0;
+const LOAD_LIMIT = 20;
+let isLoadingMore = false;
 function backToList() {
   document.getElementById('reader').classList.add('hidden');
   document.getElementById('comic-list').classList.remove('hidden');
   currentComic = null;
 }
 
-function renderComicList() {
+function renderComicList(loadMore = false) {
   const container = document.getElementById('comic-list');
-  container.innerHTML = '';
-  comics.forEach((comic, idx) => {
+  const keyword = document.getElementById('filterInput')?.value?.toLowerCase() || '';
+  const isFiltering = keyword.length > 0;
+
+  if (!loadMore || isFiltering) {
+    container.innerHTML = '';
+    loadedCount = 0;
+  }
+
+  let shown = 0;
+  for (let i = 0; i < comics.length; i++) {
+    const comic = comics[i];
+    if (!comic.name.toLowerCase().includes(keyword)) continue;
+
+    if (!isFiltering && i < loadedCount) continue; // Đã render trước đó, bỏ qua nếu không filter
+
     const div = document.createElement('div');
     div.className = 'cursor-pointer hover:opacity-90 transition border rounded overflow-hidden shadow';
-    div.innerHTML = `<img src="${comic.image}" alt="${comic.name}" class="w-full h-[220px] object-cover"/>
+    div.innerHTML = `<img src="${comic.image}" alt="${comic.name}" class="w-full h-[220px] object-cover" loading="lazy"/>
                      <div class="p-1 text-sm font-medium text-center line-clamp-2">${comic.name}</div>`;
-    div.onclick = () => openComic(idx);
+    div.onclick = () => openComic(i);
     container.appendChild(div);
-  });
-}
 
+    shown++;
+    if (!isFiltering) loadedCount++;
+
+    if (!isFiltering && shown >= LOAD_LIMIT) break;
+  }
+}
+window.addEventListener('scroll', () => {
+  if (isLoadingMore || currentComic !== null) return; // Không tải thêm nếu đang đọc truyện
+
+  const scrollPos = window.innerHeight + window.scrollY;
+  const threshold = document.body.offsetHeight - 300;
+
+  if (scrollPos >= threshold) {
+    isLoadingMore = true;
+    setTimeout(() => {
+      renderComicList(true);
+      isLoadingMore = false;
+    }, 300); // debounce nhẹ
+  }
+});
 function openComic(index) {
   currentComic = comics[index];
   currentChapterIndex = 0;
   document.getElementById('comic-list').classList.add('hidden');
   document.getElementById('reader').classList.remove('hidden');
+  document.getElementById('filter').classList.remove('hidden');
   if (window.innerWidth < 768) document.getElementById('sp-nav').classList.remove('hidden');
   renderChapterList(); renderChapterContent(); updateChapterSelect();
 }
@@ -138,13 +181,26 @@ function nextChapter() {
   }
 }
 
+function filterComics() {
+  renderComicList();
+}
+
+function resetFilter() {
+  const input = document.getElementById('filterInput');
+  if (input) input.value = '';
+  renderComicList();
+}
+document.getElementById('loading-spinner').classList.remove('hidden'); // Hiện spinner
+
 fetch(R2_JSON_URL)
   .then(res => res.json())
   .then(data => {
     comics = data.comics || [];
     renderComicList();
+    document.getElementById('loading-spinner').classList.add('hidden'); // Ẩn spinner sau khi render xong
   })
   .catch(err => alert('Không thể tải dữ liệu truyện'));
+  document.getElementById('loading-spinner').classList.add('hidden');
 </script>
 
 <style>

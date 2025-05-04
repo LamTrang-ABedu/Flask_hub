@@ -12,7 +12,7 @@ from utils.proxy_fetcher import load_proxies
 from utils.keepalive_bot import start_keepalive_bot
 from utils.r2_fetcher import fetch_media_from_r2
 from utils.crawler_x import crawl
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse
 
 start_keepalive_bot()
 
