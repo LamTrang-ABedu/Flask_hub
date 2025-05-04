@@ -15,8 +15,8 @@
 
 <div id="mediaPreview">
   <span id="closePreview">&times;</span>
-  <button id="prevBtn" style="position:absolute;left:20px;top:50%;transform:translateY(-50%);z-index:1001;font-size:24px;">⬅️</button>
-  <button id="nextBtn" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);z-index:1001;font-size:24px;">➡️</button>
+  <button id="prevBtn" class="navBtn" style="position:absolute;left:20px;top:50%;transform:translateY(-50%);z-index:1001;font-size:24px;">⬅️</button>
+  <button id="nextBtn" class="navBtn" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);z-index:1001;font-size:24px;">➡️</button>
   <div id="mediaPreviewContent"></div>
 </div>
 
@@ -72,6 +72,11 @@
     color: white;
     font-size: 24px;
     cursor: pointer;
+  }
+  @media (min-width: 768px) {
+    .navBtn {
+      display: block;
+    }
   }
 </style>
 
