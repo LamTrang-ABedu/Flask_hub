@@ -15,8 +15,12 @@
 
 <div id="mediaPreview">
   <span id="closePreview">&times;</span>
+  <button id="prevBtn" style="position:absolute;left:20px;top:50%;transform:translateY(-50%);z-index:1001;font-size:24px;">⬅️</button>
+  <button id="nextBtn" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);z-index:1001;font-size:24px;">➡️</button>
   <div id="mediaPreviewContent"></div>
 </div>
+
+<button id="backToTop" style="position:fixed;bottom:20px;right:20px;display:none;z-index:1001;">⬆️ Top</button>
 
 <style>
   .grid {
@@ -51,6 +55,15 @@
   #mediaPreviewContent {
     max-width: 90vw;
     max-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #mediaPreviewContent img,
+  #mediaPreviewContent video {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
   }
   #closePreview {
     position: absolute;
@@ -63,6 +76,9 @@
 </style>
 
 <script>
+  let currentIndex = -1;
+  let currentItems = [];
+
   async function loadGallery() {
     const source = document.getElementById('sourceSelect').value;
     const gallery = document.getElementById('gallery');
@@ -72,16 +88,16 @@
       const res = await fetch(`https://r2.lam.io.vn/MEDIA/${source}`);
       const items = await res.json();
       gallery.innerHTML = '';
+      currentItems = items;
 
-      items.forEach(item => {
-        // Chuẩn hóa định dạng item
+      items.forEach((item, index) => {
         if (!item.type) {
           if (item.video && item.thumb) {
             item.type = "video";
             item.post_url = item.video;
             item.thumbnail = item.thumb;
           } else {
-            item.type = "image";  // fallback nếu chỉ có ảnh
+            item.type = "image";
             item.url = item.url || item.thumb;
           }
         }
@@ -101,13 +117,19 @@
           div.appendChild(thumb);
         }
 
-        div.onclick = () => showPreview(item);
+        div.onclick = () => showPreviewByIndex(index);
         gallery.appendChild(div);
       });
     } catch (err) {
       gallery.innerHTML = 'Failed to load.';
       console.error(err);
     }
+  }
+
+  function showPreviewByIndex(index) {
+    if (index < 0 || index >= currentItems.length) return;
+    currentIndex = index;
+    showPreview(currentItems[currentIndex]);
   }
 
   function showPreview(item) {
@@ -119,39 +141,63 @@
       const url = item.url.split('&')[0];
       const img = document.createElement('img');
       img.src = url;
-      img.style.maxWidth = '100%';
-      img.style.maxHeight = '100%';
       content.appendChild(img);
     } else if (item.type === "video") {
-  fetch(`/api/universal-download?url=${encodeURIComponent(item.post_url)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'ok' && data.media.length > 0) {
-        const realUrl = data.media[0].url;
-        const video = document.createElement('video');
-        video.controls = true;
-        video.autoplay = true;
-        video.src = realUrl;
-        video.style.maxWidth = '100%';
-        video.style.maxHeight = '100%';
-        content.appendChild(video);
-      } else {
-        content.innerHTML = '<div style="color:red">Failed to load video</div>';
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      content.innerHTML = '<div style="color:red">Error loading video</div>';
-    });
-}
+      fetch(`/api/universal-download?url=${encodeURIComponent(item.post_url)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'ok' && data.media.length > 0) {
+            const realUrl = data.media[0].url;
+            const video = document.createElement('video');
+            video.controls = true;
+            video.autoplay = true;
+            video.src = realUrl;
+            content.appendChild(video);
+          } else {
+            content.innerHTML = '<div style="color:red">Failed to load video</div>';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          content.innerHTML = '<div style="color:red">Error loading video</div>';
+        });
+    }
 
     preview.style.display = 'flex';
+
+    preview.onclick = (e) => {
+      if (e.target === preview) {
+        preview.style.display = 'none';
+        content.innerHTML = '';
+      }
+    };
   }
 
   document.getElementById('closePreview').onclick = () => {
     document.getElementById('mediaPreview').style.display = 'none';
     document.getElementById('mediaPreviewContent').innerHTML = '';
   };
+
+  document.getElementById('prevBtn').onclick = () => showPreviewByIndex(currentIndex - 1);
+  document.getElementById('nextBtn').onclick = () => showPreviewByIndex(currentIndex + 1);
+
+  document.getElementById('backToTop').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.addEventListener('scroll', () => {
+    document.getElementById('backToTop').style.display = window.scrollY > 300 ? 'block' : 'none';
+  });
+
+  const preview = document.getElementById('mediaPreview');
+  let touchStartX = 0;
+  let touchEndX = 0;
+  preview.addEventListener('touchstart', (e) => touchStartX = e.changedTouches[0].screenX);
+  preview.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    if (touchEndX - touchStartX > 50) {
+      showPreviewByIndex(currentIndex - 1);
+    } else if (touchStartX - touchEndX > 50) {
+      showPreviewByIndex(currentIndex + 1);
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sourceSelect').onchange = loadGallery;
