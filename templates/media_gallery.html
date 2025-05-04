@@ -122,15 +122,28 @@
       img.style.maxWidth = '100%';
       img.style.maxHeight = '100%';
       content.appendChild(img);
-    } else if (item.type === 'video') {
-      const video = document.createElement('video');
-      video.controls = true;
-      video.autoplay = true;
-      video.src = `/api/universal-download?url=${encodeURIComponent(item.post_url)}`;
-      video.style.maxWidth = '100%';
-      video.style.maxHeight = '100%';
-      content.appendChild(video);
-    }
+    } else if (item.type === "video") {
+  fetch(`/api/universal-download?url=${encodeURIComponent(item.post_url)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok' && data.media.length > 0) {
+        const realUrl = data.media[0].url;
+        const video = document.createElement('video');
+        video.controls = true;
+        video.autoplay = true;
+        video.src = realUrl;
+        video.style.maxWidth = '100%';
+        video.style.maxHeight = '100%';
+        content.appendChild(video);
+      } else {
+        content.innerHTML = '<div style="color:red">Failed to load video</div>';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      content.innerHTML = '<div style="color:red">Error loading video</div>';
+    });
+}
 
     preview.style.display = 'flex';
   }
