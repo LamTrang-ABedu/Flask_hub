@@ -1,35 +1,51 @@
-{% extends "index.html" %}
-{% block title %}Instagram Gallery{% endblock %}
-
+{% extends 'index.html' %}
+{% block title %}Crawler X.com{% endblock %}
 {% block content %}
-<h2>Instagram Gallery</h2>
-<input id="username" placeholder="e.g. femalemodels" />
-<button onclick="load()">Load</button>
-<div id="results" style="margin-top: 1rem;"></div>
+<div class="p-4 max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Crawl ảnh/video từ X.com</h1>
+
+  <div class="mb-4">
+    <label for="xUsername" class="block font-medium">Nhập username:</label>
+    <input id="xUsername" type="text" placeholder="vd: xingyinxiaoyi"
+           class="w-full border p-2 rounded mt-1" />
+  </div>
+
+  <button onclick="triggerCrawl()" class="bg-blue-600 text-white px-4 py-2 rounded">Bắt đầu crawl</button>
+
+  <div id="crawlStatus" class="mt-4 text-sm text-gray-700"></div>
+</div>
 
 <script>
-async function load() {
-  const username = document.getElementById("username").value;
-  const res = await fetch(`/api/ig-gallery?username=${username}`);
-  const data = await res.json();
-  const div = document.getElementById("results");
-  div.innerHTML = "";
+function triggerCrawl() {
+  const username = document.getElementById("xUsername").value.trim();
+  const status = document.getElementById("crawlStatus");
 
-  if (data.status !== "ok") {
-    div.innerHTML = `<p>Failed: ${data.message}</p>`;
+  if (!username) {
+    status.innerText = "Vui lòng nhập username.";
     return;
   }
 
-  data.results.forEach(item => {
-    const block = document.createElement("div");
-    block.innerHTML = `
-      <p>${item.title}</p>
-      ${item.video ? 
-        `<video controls width="400" src="${item.video}"></video>` :
-        `<img src="${item.thumb}" width="400"/>`}
-      <hr/>
-    `;
-    div.appendChild(block);
+  status.innerText = `Đang crawl @${username}... Vui lòng chờ.`;
+
+  fetch("https://your-crawler-url.onrailway.app/crawl", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username,
+      callback: "https://your-hopehub-url.com/api/crawl-callback"
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'started') {
+      status.innerText = `Đang tiến hành crawl @${username}... Bạn sẽ được thông báo khi hoàn tất.`;
+    } else {
+      status.innerText = `Có lỗi xảy ra: ${data.message || 'Không rõ lý do'}`;
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    status.innerText = "Không thể kết nối tới crawler.";
   });
 }
 </script>
