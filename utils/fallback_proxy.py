@@ -16,7 +16,7 @@ PROFILE_SERVICES = [
 
 MEDIA_SERVERS = [
     "https://media-downloader-service.onrender.com",
-    # "https://media-downloader-railway.app",
+    "media-downloader.up.railway.app",
     # "https://media-downloader.fly.dev"
 ]
 

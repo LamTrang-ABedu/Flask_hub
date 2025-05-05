@@ -63,7 +63,7 @@ def api_universal_download():
     url = request.args.get('url', '')
     if not url:
         return jsonify({'status': 'error', 'message': 'Missing URL'}), 400
-    return jsonify(download_from_url(url))
+    return jsonify(api_media_download(url))
 
 @app.route('/telegram')
 def telegram_gallery_page():
