@@ -16,7 +16,7 @@ def download_from_url(url):
         domain = urlparse(url).netloc.replace("www.", "")
         cookiefile = None
         if domain in COOKIE_URL_MAP:
-            cookiefile = f"/tmp/cookies.txt"
+            cookiefile = f"/tmp/{domain.replace('.', '_')}_cookies.txt"
 
             _download_cookie_once(
                 COOKIE_URL_MAP[domain],
