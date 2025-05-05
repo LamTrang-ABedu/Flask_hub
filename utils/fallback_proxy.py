@@ -1,6 +1,7 @@
 import requests
-
 import socket
+from .media_downloader import download_from_url
+from .profile_faker import generate_profile
 
 def is_localhost():
     hostname = socket.gethostname()
@@ -44,7 +45,7 @@ def generate_profile_proxy(locale="en_US"):
             print(f"[WARN] Failed to fetch from {server}: {e}")
             continue  # Thử server tiếp theo
     # Nếu không server nào trả lời được
-    return {"status": "error", "message": "All servers are unreachable"}
+    return generate_profile(locale)  # Gọi hàm generate_profile nội bộ như là phương án cuối cùng
 
 def api_media_download(url = ""):
     for server in MEDIA_SERVERS:
@@ -54,6 +55,7 @@ def api_media_download(url = ""):
                 return res.json()
         except Exception as e:
             print(f"[WARN] Failed to fetch from {server}: {e}")
+    return download_from_url(url)  # Nếu không thành công, thử tải trực tiếp từ URL ∂
 
 def api_telegram_download(group = ""):
     for server in TELEGRAM_SERVERS:

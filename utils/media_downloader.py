@@ -4,7 +4,7 @@ import os
 from urllib.parse import urlparse
 import random # Thêm import random
 # URL cookies từ R2
-from .proxy_fetcher import load_proxies # Thêm import proxy loader
+from .proxy_fetcher import load_proxies, refresh_proxies # Thêm import proxy loader
 
 # URL cookies từ R2
 COOKIE_URL_MAP = {
@@ -16,6 +16,7 @@ COOKIE_URL_MAP = {
 }
 def download_from_url(url):
     # --- Cải thiện logic xử lý proxy cho YouTube ---
+    refresh_proxies()
     active_proxies = load_proxies()
     proxies_to_try = [None] + random.sample(active_proxies, len(active_proxies)) # Thử không proxy trước, sau đó thử các proxy đã load (random thứ tự)
     try:
