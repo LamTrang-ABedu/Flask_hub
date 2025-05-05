@@ -28,31 +28,31 @@ def download_from_url(url):
             "quiet": True,
             "force_generic_extractor": False,
         }
-        if cookiefile:
-            ydl_opts.update({
-                'cookiefile': cookiefile,
-                'skip_download': True
-            })
-
         if domain == 'tiktok.com':
             ydl_opts.update({
+                'cookiefile': cookiefile,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...',
+                    'Referer': 'https://www.tiktok.com/'
+                }
+            })
+
+        elif domain == 'youtube.com':
+            ydl_opts.update({
+                'cookiefile': cookiefile,
+                'extractor_args': {
+                    'youtubetab': ['skip=authcheck']
+                },
                 'http_headers': {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
                 }
             })
 
-        # Instagram
-        elif domain == 'instagram.com':
+        elif cookiefile:  # fallback cho các domain còn lại
             ydl_opts.update({
-                'format': 'mp4',
-                'extract_flat': False,
+                'cookiefile': cookiefile
             })
-        elif domain == "youtube.com": 
-            ydl_opts.update({
-                'extractor_args': {
-                    'youtubetab': ['skip=authcheck']
-                }
-            })
+
 
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
