@@ -27,12 +27,12 @@ function triggerCrawl() {
 
   status.innerText = `Đang crawl @${username}... Vui lòng chờ.`;
 
-  fetch("https://your-crawler-url.onrailway.app/crawl", {
+  fetch("https://web-production-730d2.up.railway.app/crawl", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       username,
-      callback: "https://your-hopehub-url.com/api/crawl-callback"
+      callback: "https://lam.io.vn/api/crawl-callback"
     })
   })
   .then(res => res.json())
