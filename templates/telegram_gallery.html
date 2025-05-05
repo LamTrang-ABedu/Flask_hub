@@ -27,7 +27,7 @@ function triggerCrawl() {
 
   status.innerText = `Đang crawl @${username}... Vui lòng chờ.`;
 
-  fetch("https://web-production-730d2.up.railway.app/crawl", {
+  fetch("https://x-crawler.up.railway.app/crawl", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
