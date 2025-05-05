@@ -1,38 +1,43 @@
 from yt_dlp import YoutubeDL
 import requests
 import os
+from urllib.parse import urlparse
 
+# URL cookies từ R2
+COOKIE_URL_MAP = {
+    "x.com": "https://r2.lam.io.vn/cookies/x_cookies.txt",
+    "twitter.com": "https://r2.lam.io.vn/cookies/x_cookies.txt",
+    "instagram.com": "https://r2.lam.io.vn/cookies/instagram_cookies.txt",
+    "facebook.com": "https://r2.lam.io.vn/cookies/facebook_cookies.txt",
+    "tiktok.com": "https://r2.lam.io.vn/cookies/tiktok_cookies.txt",
+}
 def download_from_url(url):
     try:
-        ydl_opts = {
-            'quiet': True,
-            'force_generic_extractor': False,
-        }
+        domain = urlparse(url).netloc.replace("www.", "")
+        cookiefile = None
+        if domain in COOKIE_URL_MAP:
+            cookiefile = f"/tmp/cookies.txt"
 
-        # Twitter/X
-        if 'x.com' in url or 'twitter.com' in url:
-            cookie_path = '/tmp/x_cookies.txt'
             _download_cookie_once(
-                'https://r2.lam.io.vn/cookies/x_cookies.txt',
-                cookie_path
+                COOKIE_URL_MAP[domain],
+                cookiefile
             )
+
+        ydl_opts = {
+            "quiet": True,
+            "force_generic_extractor": False,
+        }
+        if cookiefile:
             ydl_opts.update({
-                'cookiefile': cookie_path,
+                'cookiefile': cookiefile,
                 'skip_download': True
             })
 
         # Instagram
         elif 'instagram.com' in url:
-            cookie_path = '/tmp/instagram_cookies.txt'
-            _download_cookie_once(
-                'https://r2.lam.io.vn/cookies/instagram_cookies.txt',
-                cookie_path
-            )
             ydl_opts.update({
-                'cookiefile': cookie_path,
                 'format': 'mp4',  # không merge audio, lấy link trực tiếp
                 'extract_flat': False,
-                'skip_download': True
             })
 
         with YoutubeDL(ydl_opts) as ydl:
