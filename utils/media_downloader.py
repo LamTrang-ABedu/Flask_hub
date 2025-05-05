@@ -10,12 +10,14 @@ COOKIE_URL_MAP = {
     "instagram.com": "https://r2.lam.io.vn/cookies/instagram_cookies.txt",
     "facebook.com": "https://r2.lam.io.vn/cookies/facebook_cookies.txt",
     "tiktok.com": "https://r2.lam.io.vn/cookies/tiktok_cookies.txt",
+    "youtube.com": "https://r2.lam.io.vn/cookies/youtube_cookies.txt",
 }
 def download_from_url(url):
     try:
         domain = urlparse(url).netloc.replace("www.", "")
         cookiefile = None
         if domain in COOKIE_URL_MAP:
+            print(f"Downloading cookies for {domain}...")
             cookiefile = f"/tmp/{domain.replace('.', '_')}_cookies.txt"
 
             _download_cookie_once(
