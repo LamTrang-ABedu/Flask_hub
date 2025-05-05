@@ -34,11 +34,24 @@ def download_from_url(url):
                 'skip_download': True
             })
 
+        if domain == 'tiktok.com':
+            ydl_opts.update({
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
+                }
+            })
+
         # Instagram
-        elif 'instagram.com' in url:
+        elif domain == 'instagram.com':
             ydl_opts.update({
                 'format': 'mp4',
                 'extract_flat': False,
+            })
+        elif domain == "youtube.com": 
+            ydl_opts.update({
+                'extractor_args': {
+                    'youtubetab': ['skip=authcheck']
+                }
             })
 
         with YoutubeDL(ydl_opts) as ydl:
