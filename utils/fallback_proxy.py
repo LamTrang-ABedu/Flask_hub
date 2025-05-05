@@ -41,7 +41,7 @@ def generate_profile_proxy(locale="en_US"):
                 if data:  # Nếu trả về JSON không rỗng
                     return data
         except Exception as e:
-            print(f"[Warning] Server {url} failed: {e}")
+            print(f"[WARN] Failed to fetch from {server}: {e}")
             continue  # Thử server tiếp theo
     # Nếu không server nào trả lời được
     return {"status": "error", "message": "All servers are unreachable"}

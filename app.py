@@ -35,11 +35,6 @@ def media_gallery_page():
 
 @app.route('/api/media')
 def api_media():
-    # source = request.args.get('source', '')
-    # if not source:
-    #     return jsonify({'status': 'error', 'message': 'Missing keyword'}), 400
-    # return jsonify(fetch_media(source))
-
     source = request.args.get('source', '').strip().lower()
     if not source:
         return jsonify({'status': 'error', 'message': 'Missing source'}), 400
@@ -63,7 +58,7 @@ def api_universal_download():
     url = request.args.get('url', '')
     if not url:
         return jsonify({'status': 'error', 'message': 'Missing URL'}), 400
-    return jsonify(api_media_download(url))
+    return api_media_download(url)
 
 @app.route('/telegram')
 def telegram_gallery_page():
