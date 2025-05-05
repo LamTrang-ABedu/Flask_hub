@@ -10,6 +10,7 @@ COOKIE_URL_MAP = {
     "instagram.com": "https://r2.lam.io.vn/cookies/instagram_cookies.txt",
     "facebook.com": "https://r2.lam.io.vn/cookies/facebook_cookies.txt",
     "tiktok.com": "https://r2.lam.io.vn/cookies/tiktok_cookies.txt",
+    "youtube.com": "https://r2.lam.io.vn/cookies/youtube_cookies.txt",
 }
 def download_from_url(url):
     try:
@@ -38,15 +39,16 @@ def download_from_url(url):
                 }
             })
 
-        # elif domain == 'youtube.com':
-        #     ydl_opts.update({
-        #         'extractor_args': {
-        #             'youtubetab': ['skip=authcheck']
-        #         },
-        #         'http_headers': {
-        #             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
-        #         }
-        #     })
+        elif domain == 'youtube.com':
+            ydl_opts.update({
+                'cookiefile': cookiefile,
+                'extractor_args': {
+                    'youtubetab': ['skip=authcheck']
+                },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
+                }
+            })
 
         elif cookiefile:  # fallback cho các domain còn lại
             ydl_opts.update({
