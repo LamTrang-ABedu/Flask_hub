@@ -164,7 +164,13 @@ def proxy_image():
 
     except Exception as e:
         return f"Error: {e}", 500
-    
+
+@app.route("/api/crawl-callback", methods=["POST"])
+def crawl_callback():
+    data = request.json
+    print(f"[Callback] Crawl for {data.get('username')} DONE")
+    # Ghi log / update DB / push notification frontend
+    return {"status": "ok"}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
