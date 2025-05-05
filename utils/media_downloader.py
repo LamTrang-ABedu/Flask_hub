@@ -20,10 +20,9 @@ def download_from_url(url):
             print(f"Downloading cookies for {domain}...")
             cookiefile = f"/tmp/{domain.replace('.', '_')}_cookies.txt"
 
-            _download_cookie_once(
-                COOKIE_URL_MAP[domain],
-                cookiefile
-            )
+            # Tải cookie và xử lý lỗi
+            if not _download_cookie_once(COOKIE_URL_MAP[domain], cookiefile):
+                return {'status': 'error', 'message': f"Failed to download cookies for {domain}"}
 
         ydl_opts = {
             "quiet": True,
@@ -38,12 +37,15 @@ def download_from_url(url):
         # Instagram
         elif 'instagram.com' in url:
             ydl_opts.update({
-                'format': 'mp4',  # không merge audio, lấy link trực tiếp
+                'format': 'mp4',
                 'extract_flat': False,
             })
 
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
+            if not info:
+                return {'status': 'error', 'message': 'Failed to extract media info'}
+
             media_list = []
             if 'entries' in info:
                 for entry in info['entries']:
@@ -56,17 +58,35 @@ def download_from_url(url):
         return {'status': 'error', 'message': str(e)}
 
 def _download_cookie_once(remote_url, local_path):
-    if not os.path.exists(local_path):
-        resp = requests.get(remote_url)
-        if resp.ok:
-            with open(local_path, 'w', encoding='utf-8') as f:
-                f.write(resp.text)
+    try:
+        if not os.path.exists(local_path):
+            resp = requests.get(remote_url)
+            if resp.ok:
+                with open(local_path, 'w', encoding='utf-8') as f:
+                    f.write(resp.text)
+                return True
+            else:
+                print(f"Failed to download cookies from {remote_url}: {resp.status_code}")
+                return False
+        return True
+    except Exception as e:
+        print(f"Error downloading cookies: {str(e)}")
+        return False
 
 def _extract_item(info):
     source_url = info.get('webpage_url', '')
     ext = info.get('ext')
+    url = info.get('url')
 
-    # Twitter/X
+    # ✅ Fallback: nếu url bị null thì lấy từ formats
+    if not url and 'formats' in info:
+        formats = [f for f in info['formats'] if f.get('url')]
+        if formats:
+            best = formats[-1]
+            url = best.get('url')
+            ext = best.get('ext', ext)
+
+    # 🐦 Twitter/X
     if 'x.com' in source_url or 'twitter.com' in source_url:
         best_format = None
         if 'formats' in info:
@@ -75,37 +95,37 @@ def _extract_item(info):
 
         return {
             'title': info.get('title'),
-            'url': best_format.get('url') if best_format else info.get('url'),
+            'url': best_format.get('url') if best_format else url,
             'thumbnail': info.get('thumbnail'),
             'ext': best_format.get('ext') if best_format else ext,
             'webpage_url': source_url
         }
 
-    # Instagram
+    # 📸 Instagram
     elif 'instagram.com' in source_url:
         # Nếu là ảnh
-        if info.get('url', '').endswith(('.jpg', '.jpeg', '.png')):
+        if url and url.endswith(('.jpg', '.jpeg', '.png')):
             return {
                 'title': info.get('title') or 'Instagram Image',
-                'url': info.get('url'),
-                'thumbnail': info.get('url'),
+                'url': url,
+                'thumbnail': url,
                 'ext': 'jpg',
                 'webpage_url': source_url
             }
         # Nếu là video
-        elif info.get('ext') == 'mp4':
+        elif ext == 'mp4':
             return {
                 'title': info.get('title') or 'Instagram Video',
-                'url': info.get('url'),
+                'url': url,
                 'thumbnail': info.get('thumbnail'),
                 'ext': 'mp4',
                 'webpage_url': source_url
             }
 
-    # Default fallback
+    # 🌐 Mặc định (Facebook, TikTok, YouTube...)
     return {
         'title': info.get('title'),
-        'url': info.get('url'),
+        'url': url,
         'thumbnail': info.get('thumbnail'),
         'ext': ext,
         'webpage_url': source_url
