@@ -160,6 +160,19 @@ def proxy_image():
     except Exception as e:
         return f"Error: {e}", 500
 
+@app.route("/api/proxy")
+def proxy():
+    real_url = request.args.get("real_url")
+    ua = request.args.get("ua", "Mozilla/5.0")
+    referer = request.args.get("referer", None)
+
+    headers = {"User-Agent": ua}
+    if referer:
+        headers["Referer"] = referer
+
+    r = requests.get(real_url, headers=headers, stream=True)
+    return Response(r.iter_content(chunk_size=8192), content_type=r.headers.get("Content-Type"))
+
 @app.route("/api/crawl-callback", methods=["POST"])
 def crawl_callback():
     data = request.json
