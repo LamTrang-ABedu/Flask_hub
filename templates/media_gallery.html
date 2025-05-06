@@ -112,19 +112,19 @@
 
       items.forEach((item, index) => {
         // Fallback để đảm bảo gallery hoạt động cho dữ liệu thiếu field
-        if (!item.type) {
-          if (item.video && item.thumb) {
-            item.type = "video";
-            item.post_url = item.video;
-            item.thumbnail = item.thumb;
-          } else if (item.url || item.thumb) {
-            item.type = "image";
-            item.url = item.url || item.thumb;
-          } else {
-            console.warn("Skipped item with no media:", item);
-            return; // skip nếu không có gì để hiển thị
-          }
+        
+        if (item.video && item.thumb) {
+          item.type = "video";
+          item.post_url = item.video;
+          item.thumbnail = item.thumb;
+        } else if (item.url || item.thumb) {
+          item.type = "image";
+          item.url = item.url || item.thumb;
+        } else {
+          console.warn("Skipped item with no media:", item);
+          return; // skip nếu không có gì để hiển thị
         }
+        
       
         const div = document.createElement('div');
         div.className = 'media-item';
