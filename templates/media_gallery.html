@@ -174,7 +174,8 @@
             const audio_url = data.media[0].audio_url;
             if (video_url && audio_url) {
               const vid = document.createElement('video');
-              vid.src = video_url;
+              let needsProxy = ['pornhub.com', 'phncdn.com'].some(domain => video_url.includes(domain));
+              vid.src = needsProxy ? `/api/proxy?real_url=${encodeURIComponent(video_url)}` : video_url;
               vid.controls = true;
               vid.muted = true;
               vid.playsInline = true;
