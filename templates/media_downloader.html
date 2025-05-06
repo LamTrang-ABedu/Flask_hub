@@ -32,7 +32,7 @@ async function downloadMedia() {
           item.video_url.includes(domain)
         );
         vid.src = needsProxy
-          ? `/api/proxy2?real_url=${encodeURIComponent(item.video_url)}`
+          ? `/api/proxy?real_url=${encodeURIComponent(item.video_url)}`
           : item.video_url;
         // vid.src = item.video_url;
         vid.controls = true;
