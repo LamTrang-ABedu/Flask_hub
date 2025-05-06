@@ -11,51 +11,57 @@
 async function downloadMedia() {
   const url = document.getElementById('urlInput').value.trim();
   const container = document.getElementById('downloadResult');
-  container.innerHTML = '';
+  container.innerHTML = '<p>Loading media... ⏳</p>';
   if (!url) return alert('Please paste a media URL.');
-  const res = await fetch(`/api/universal-download?url=${encodeURIComponent(url)}`);
-  const data = await res.json();
-  if (data.status !== 'ok') {
-    container.innerHTML = `<p style="color:red;">Error: ${data.message}</p>`;
-    return;
-  }
-  for (const item of data.media) {
-    const card = document.createElement('div');
-    card.style = 'border:1px solid #ccc;padding:10px;border-radius:8px;background:#fafafa';
-    card.innerHTML = `<p><strong>${item.title || 'Media'}</strong></p>`;
-
-    if (item.video_url && item.audio_url) {
-      const vid = document.createElement('video');
-      vid.src = item.video_url;
-      vid.controls = true;
-      vid.muted = true;
-      vid.playsInline = true;
-      vid.style = 'width:100%;margin-top:8px;';
-      const aud = document.createElement('audio');
-      aud.src = item.audio_url;
-
-      vid.addEventListener('play', () => aud.play());
-      vid.addEventListener('pause', () => aud.pause());
-      vid.addEventListener('seeking', () => { aud.currentTime = vid.currentTime });
-      vid.addEventListener('timeupdate', () => {
-        if (Math.abs(aud.currentTime - vid.currentTime) > 0.3) {
-          aud.currentTime = vid.currentTime;
-        }
-      });
-
-      card.appendChild(vid);
-      card.appendChild(aud);
-      card.innerHTML += `<a href="${item.video_url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download Video</a>`;
-      card.innerHTML += `<br><a href="${item.audio_url}" download style="display:inline-block;margin-top:5px;color:#007BFF;">Download Audio</a>`;
-
-    } else if (item.ext === 'mp4' || (item.url && item.url.includes('.mp4'))) {
-      card.innerHTML += `<video src="${item.url}" controls style="width:100%;margin-top:8px;"></video>`;
-      card.innerHTML += `<a href="${item.url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download</a>`;
-    } else {
-      card.innerHTML += `<img src="${item.url}" style="width:100%;margin-top:8px;border-radius:4px;">`;
-      card.innerHTML += `<a href="${item.url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download</a>`;
+  try {
+    const res = await fetch(`/api/universal-download?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+    container.innerHTML = '';
+    if (data.status !== 'ok') {
+      container.innerHTML = `<p style="color:red;">Error: ${data.message}</p>`;
+      return;
     }
-    container.appendChild(card);
+    for (const item of data.media) {
+      const card = document.createElement('div');
+      card.style = 'border:1px solid #ccc;padding:10px;border-radius:8px;background:#fafafa';
+      card.innerHTML = `<p><strong>${item.title || 'Media'}</strong></p>`;
+
+      if (item.video_url && item.audio_url) {
+        const vid = document.createElement('video');
+        vid.src = item.video_url;
+        vid.controls = true;
+        vid.muted = true;
+        vid.playsInline = true;
+        vid.style = 'width:100%;margin-top:8px;';
+        const aud = document.createElement('audio');
+        aud.src = item.audio_url;
+
+        vid.addEventListener('play', () => aud.play());
+        vid.addEventListener('pause', () => aud.pause());
+        vid.addEventListener('seeking', () => { aud.currentTime = vid.currentTime });
+        vid.addEventListener('timeupdate', () => {
+          if (Math.abs(aud.currentTime - vid.currentTime) > 0.3) {
+            aud.currentTime = vid.currentTime;
+          }
+        });
+
+        card.appendChild(vid);
+        card.appendChild(aud);
+        card.innerHTML += `<a href="${item.video_url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download Video</a>`;
+        card.innerHTML += `<br><a href="${item.audio_url}" download style="display:inline-block;margin-top:5px;color:#007BFF;">Download Audio</a>`;
+
+      } else if (item.ext === 'mp4' || (item.url && item.url.includes('.mp4'))) {
+        card.innerHTML += `<video src="${item.url}" controls style="width:100%;margin-top:8px;"></video>`;
+        card.innerHTML += `<a href="${item.url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download</a>`;
+      } else {
+        card.innerHTML += `<img src="${item.url}" style="width:100%;margin-top:8px;border-radius:4px;">`;
+        card.innerHTML += `<a href="${item.url}" download style="display:inline-block;margin-top:10px;color:#007BFF;">Download</a>`;
+      }
+      container.appendChild(card);
+    }
+  } catch (err) {
+    container.innerHTML = `<p style='color:red;'>Failed to load. Check your connection or the input URL.</p>`;
+    console.error(err);
   }
 }
 </script>
