@@ -162,16 +162,21 @@ def proxy_image():
 
 @app.route("/api/proxy")
 def proxy():
-    real_url = request.args.get("real_url")
-    ua = request.args.get("ua", "Mozilla/5.0")
-    referer = request.args.get("referer", None)
+    real_url = request.args.get('real_url')
+    if not real_url:
+        return "Missing URL", 400
 
-    headers = {"User-Agent": ua}
-    if referer:
-        headers["Referer"] = referer
-
-    r = requests.get(real_url, headers=headers, stream=True)
-    return Response(r.iter_content(chunk_size=8192), content_type=r.headers.get("Content-Type"))
+    try:
+        headers = {
+            'Referer': request.headers.get('Referer', ''),
+            'User-Agent': request.headers.get('User-Agent', 'Mozilla/5.0'),
+        }
+        r = requests.get(real_url, headers=headers, stream=True)
+        return Response(r.iter_content(chunk_size=8192),
+                        content_type=r.headers.get('Content-Type'),
+                        status=r.status_code)
+    except Exception as e:
+        return f"Proxy error: {e}", 500
 
 @app.route("/api/crawl-callback", methods=["POST"])
 def crawl_callback():
