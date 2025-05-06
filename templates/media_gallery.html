@@ -170,12 +170,28 @@
         .then(res => res.json())
         .then(data => {
           if (data.status === 'ok' && data.media.length > 0) {
-            const realUrl = data.media[0].url;
-            const video = document.createElement('video');
-            video.controls = true;
-            video.autoplay = true;
-            video.src = realUrl;
-            content.appendChild(video);
+            const video_url = data.media[0].video_url;
+            const audio_url = data.media[0].audio_url;
+            if (video_url && audio_url) {
+              const vid = document.createElement('video');
+              vid.src = video_url;
+              vid.controls = true;
+              vid.muted = true;
+              vid.playsInline = true;
+              vid.style = 'width:100%;margin-top:8px;';
+              const aud = document.createElement('audio');
+              aud.src = audio_url;
+
+              vid.addEventListener('play', () => aud.play());
+              vid.addEventListener('pause', () => aud.pause());
+              vid.addEventListener('seeking', () => { aud.currentTime = vid.currentTime });
+              vid.addEventListener('timeupdate', () => {
+                if (Math.abs(aud.currentTime - vid.currentTime) > 0.3) {
+                  aud.currentTime = vid.currentTime;
+                }
+              });
+              content.appendChild(video);
+            }
           } else {
             content.innerHTML = '<div style="color:red">Failed to load video</div>';
           }
