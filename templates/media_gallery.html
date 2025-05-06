@@ -112,17 +112,18 @@
 
       items.forEach((item, index) => {
         // Fallback để đảm bảo gallery hoạt động cho dữ liệu thiếu field
-        
-        if (item.video && item.thumb) {
-          item.type = "video";
-          item.post_url = item.video;
-          item.thumbnail = item.thumb;
-        } else if (item.url || item.thumb) {
-          item.type = "image";
-          item.url = item.url || item.thumb;
-        } else {
-          console.warn("Skipped item with no media:", item);
-          return; // skip nếu không có gì để hiển thị
+        if (!item.type) {
+          if (item.type == "video") {
+            item.type = item.type;
+            item.url = item.url;
+            item.thumbnail = item.thumb;
+          } else if (item.type == "image") {
+            item.type = item.type;
+            item.url = item.url || item.thumb;
+          } else {
+            console.warn("Skipped item with no media:", item);
+            return; // skip nếu không có gì để hiển thị
+          }
         }
         
       
@@ -167,7 +168,7 @@
       img.src = url;
       content.appendChild(img);
     } else if (item.type === "video") {
-      fetch(`/api/universal-download?url=${encodeURIComponent(item.post_url)}`)
+      fetch(`/api/universal-download?url=${encodeURIComponent(item.url)}`)
         .then(res => res.json())
         .then(data => {
           if (data.status === 'ok' && data.media.length > 0) {
