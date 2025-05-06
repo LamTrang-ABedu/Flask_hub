@@ -162,21 +162,31 @@ def proxy_image():
 
 @app.route("/api/proxy")
 def proxy():
-    real_url = request.args.get('real_url')
+    real_url = request.args.get("real_url")
     if not real_url:
         return "Missing URL", 400
 
-    try:
-        headers = {
-            'Referer': request.headers.get('Referer', ''),
-            'User-Agent': request.headers.get('User-Agent', 'Mozilla/5.0'),
-        }
-        r = requests.get(real_url, headers=headers, stream=True)
-        return Response(r.iter_content(chunk_size=8192),
-                        content_type=r.headers.get('Content-Type'),
-                        status=r.status_code)
-    except Exception as e:
-        return f"Proxy error: {e}", 500
+    headers = {
+        'User-Agent': request.headers.get("User-Agent"),
+        'Referer': request.args.get("referer") or 'https://www.pornhub.com',
+    }
+
+    # Chuyển tiếp cả header Range
+    if "Range" in request.headers:
+        headers["Range"] = request.headers["Range"]
+
+    r = requests.get(real_url, headers=headers, stream=True)
+
+    response = Response(r.iter_content(chunk_size=8192),
+                        status=r.status_code,
+                        content_type=r.headers.get("Content-Type"))
+
+    # Bổ sung header hỗ trợ seek
+    response.headers["Content-Range"] = r.headers.get("Content-Range")
+    response.headers["Accept-Ranges"] = "bytes"
+    response.headers["Content-Length"] = r.headers.get("Content-Length")
+
+    return response
 
 @app.route("/api/crawl-callback", methods=["POST"])
 def crawl_callback():
