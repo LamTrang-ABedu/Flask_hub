@@ -112,18 +112,16 @@
 
       items.forEach((item, index) => {
         // Fallback để đảm bảo gallery hoạt động cho dữ liệu thiếu field
-        if (!item.type) {
-          if (item.type == "video") {
-            item.type = item.type;
-            item.url = item.url;
-            item.thumbnail = item.thumb;
-          } else if (item.type == "image") {
-            item.type = item.type;
-            item.url = item.url || item.thumb;
-          } else {
-            console.warn("Skipped item with no media:", item);
-            return; // skip nếu không có gì để hiển thị
-          }
+        if (item.type == "video") {
+          item.type = item.type;
+          item.url = item.url;
+          item.thumbnail = item.thumb;
+        } else if (item.type == "image") {
+          item.type = item.type;
+          item.url = item.url || item.thumb;
+        } else {
+          console.warn("Skipped item with no media:", item);
+          return; // skip nếu không có gì để hiển thị
         }
         
       
