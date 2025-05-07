@@ -1,0 +1,215 @@
+{% extends "index.html" %}
+{% block title %}Text to Speech{% endblock %}
+{% block content %}
+<h2 style="margin-bottom: 1rem">🗣️ Text to Speech (TTS)</h2>
+<div class="input-row" style="gap: 0.5rem; flex-wrap: wrap;">
+  <select id="providerSelect"></select>
+  <select id="languageSelect"></select>
+  <select id="voiceSelect"></select>
+  <select id="speedSelect">
+    <option value="0.8">🔉 Slow</option>
+    <option value="1.0" selected>🎵 Normal</option>
+    <option value="1.2">⚡ Fast</option>
+  </select>
+</div>
+
+<div class="input-row" style="margin-top: 1rem">
+  <textarea id="ttsInput" rows="4" placeholder="Nhập nội dung cần đọc" style="width: 100%; max-width: 640px">Hello HopeHub! This is a TTS demo.</textarea>
+</div>
+
+<div class="input-row" style="margin-top: 1rem; gap: 0.5rem">
+  <button onclick="speakText()">▶️ Speak</button>
+  <button onclick="pauseAudio()">⏸️ Pause</button>
+  <span id="loadingStatus" style="font-style: italic; color: gray; display: none">⏳ Loading...</span>
+</div>
+
+<div id="textDisplay" class="tts-highlight" style="margin-top: 1rem; max-width: 640px"></div>
+
+<script>
+let audio = null;
+let rafId = null;
+const ttsCache = new Map();
+const TTS_API = "https://voice-of-hope.onrender.com";
+
+async function parseMultipartMixedArrayBuffer(buffer, boundary) {
+  const text = new TextDecoder().decode(buffer);
+  const boundaryMarker = `--${boundary}`;
+  const parts = text.split(boundaryMarker).filter(Boolean);
+
+  let jsonPart = null;
+  let audioStartIndex = -1;
+
+  for (const part of parts) {
+    if (part.includes("application/json")) {
+      const jsonMatch = /\r\n\r\n([\s\S]+?)\r\n--/.exec(part + '--');
+      if (jsonMatch) jsonPart = JSON.parse(jsonMatch[1]);
+    }
+    if (part.includes("audio/mpeg")) {
+      const partOffset = text.indexOf(part);
+      const bodyOffset = text.indexOf("\r\n\r\n", partOffset) + 4;
+      const bodyText = text.slice(0, bodyOffset);
+      audioStartIndex = bodyText.length;
+    }
+  }
+  const audioBytes = buffer.slice(audioStartIndex);
+  const audioBlob = new Blob([audioBytes], { type: 'audio/mpeg' });
+  return { jsonData: jsonPart, audioBlob };
+}
+
+async function loadVoices() {
+  document.getElementById("loadingStatus").style.display = "inline";
+  try {
+    const res = await fetch(`${TTS_API}/api/voices`);
+    const data = await res.json();
+    const provider = data.default;
+    const providers = data.providers;
+
+    document.getElementById("providerSelect").innerHTML = Object.keys(providers).map(p =>
+      `<option value="${p}" ${p === provider ? 'selected' : ''}>${p}</option>`
+    ).join('');
+
+    const langSelect = document.getElementById("languageSelect");
+    const voiceSelect = document.getElementById("voiceSelect");
+    langSelect.innerHTML = '';
+    voiceSelect.innerHTML = '';
+
+    const azureVoices = (providers.azure || []).filter(v =>
+      ["en-US", "vi-VN"].includes(v.Locale)
+    );
+
+
+    const langMap = {};
+    azureVoices.forEach(v => {
+      const lang = v.Locale;
+      if (!langMap[lang]) langMap[lang] = [];
+      langMap[lang].push(v);
+    });
+
+    for (const lang in langMap) {
+      langSelect.innerHTML += `<option value="${lang}">${lang}</option>`;
+    }
+
+    const updateVoices = () => {
+      const selectedLang = langSelect.value;
+      const voices = langMap[selectedLang] || [];
+      voiceSelect.innerHTML = voices.map(v => {
+        const val = v.ShortName;
+        const label = v.DisplayName || val;
+        return `<option value="${val}">${label}</option>`;
+      }).join('');
+    };
+
+    langSelect.onchange = updateVoices;
+    updateVoices();
+
+  } catch (e) {
+    alert("❌ Lỗi tải danh sách voices.");
+  } finally {
+    document.getElementById("loadingStatus").style.display = "none";
+  }
+}
+
+async function speakText() {
+  const text = document.getElementById("ttsInput").value.trim();
+  const provider = document.getElementById("providerSelect").value;
+  const language = document.getElementById("languageSelect").value;
+  const voice = document.getElementById("voiceSelect").value;
+  const speed = parseFloat(document.getElementById("speedSelect").value);
+
+  const cacheKey = JSON.stringify({ text, provider, language, voice });
+  const cached = ttsCache.get(cacheKey);
+  if (cached) return playFromCache(cached.audioUrl, cached.wordTimings, speed);
+
+  document.getElementById("loadingStatus").style.display = "inline";
+
+  try {
+    const res = await fetch(`${TTS_API}/api/tts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, provider, language, voice })
+    });
+
+    const contentType = res.headers.get("Content-Type");
+    if (contentType.startsWith("multipart/mixed")) {
+      const boundary = contentType.split("boundary=")[1];
+      const buffer = await res.arrayBuffer();
+      const { jsonData, audioBlob } = await parseMultipartMixedArrayBuffer(buffer, boundary);
+      const wordTimings = jsonData.filter(w => w.type === "Word").map(w => ({
+        word: w.text,
+        start: w.offset / 1_000_000,
+        end: (w.offset + w.duration) / 1_000_000
+      }));
+      const url = URL.createObjectURL(audioBlob);
+      ttsCache.set(cacheKey, { audioUrl: url, wordTimings });
+      playFromCache(url, wordTimings, speed);
+    } else {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      ttsCache.set(cacheKey, { audioUrl: url });
+      playFromCache(url, null, speed);
+    }
+  } catch (e) {
+    alert("❌ Lỗi xử lý audio.");
+  } finally {
+    document.getElementById("loadingStatus").style.display = "none";
+  }
+}
+
+function playFromCache(audioUrl, timings, speed) {
+  if (audio) audio.pause();
+  audio = new Audio(audioUrl);
+  audio.playbackRate = speed;
+  if (timings) {
+    window.wordTimings = timings;
+    highlightWithTimestamps(audio, timings);
+}
+
+  audio.play();
+}
+
+function pauseAudio() {
+  if (audio) audio.pause();
+  cancelAnimationFrame(rafId);
+}
+
+function highlightWithTimestamps(audio, timings) {
+  const display = document.getElementById("textDisplay");
+  const words = timings.map(w => w.word);
+  let currentIndex = -1;
+
+  const render = () => {
+    const t = audio.currentTime;
+    const idx = timings.findIndex((w) => t >= w.start && t < w.end);
+
+    if (idx !== -1 && idx !== currentIndex) {
+      const html = words.map((w, i) =>
+        i === idx ? `<mark>${w}</mark>` : w
+      ).join(" ");
+      display.innerHTML = html;
+      currentIndex = idx;
+    }
+
+    if (!audio.paused && !audio.ended) {
+      rafId = requestAnimationFrame(render);
+    }
+  };
+
+  audio.onplay = () => {
+    currentIndex = -1;
+    rafId = requestAnimationFrame(render);
+  };
+
+  audio.onpause = () => cancelAnimationFrame(rafId);
+  audio.onended = () => cancelAnimationFrame(rafId);
+}
+
+window.onload = loadVoices;
+</script>
+
+<style>
+.tts-highlight mark {
+  background-color: yellow;
+  font-weight: bold;
+}
+</style>
+{% endblock %}

@@ -19,6 +19,10 @@ start_keepalive_bot()
 app = Flask(__name__)
 
 @app.route('/')
+def voice_of_hope():
+    return render_template('voice_of_hope.html')
+
+@app.route('/profile')
 def profile_faker_page():
     return render_template('profile_faker.html')
 
