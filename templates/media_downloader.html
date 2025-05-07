@@ -43,18 +43,6 @@ async function downloadMedia() {
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;">
               </iframe>
             </div>`;
-            document.addEventListener("DOMContentLoaded", () => {
-            const iframe = document.querySelector('iframe[src*="tiktok.com/embed"]');
-            const card = iframe?.closest(".card-content") || iframe?.parentElement;
-
-            if (iframe && card && 'ResizeObserver' in window) {
-              const ro = new ResizeObserver(() => {
-                card.style.height = iframe.offsetHeight + "px";
-                card.style.overflow = "hidden";
-              });
-              ro.observe(iframe);
-            }
-          });
         } else {
           card.innerHTML += `<p style="color:red;">Unable to extract TikTok video ID.</p>`;
         }
