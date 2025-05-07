@@ -117,5 +117,18 @@ async function downloadMedia() {
     childList: true,
     subtree: true
   });
+  
+  document.addEventListener("DOMContentLoaded", () => {
+    const iframe = document.querySelector('iframe[src*="tiktok.com/embed"]');
+    const card = iframe?.closest(".card-content") || iframe?.parentElement;
+
+    if (iframe && card && 'ResizeObserver' in window) {
+      const ro = new ResizeObserver(() => {
+        card.style.height = iframe.offsetHeight + "px";
+        card.style.overflow = "hidden";
+      });
+      ro.observe(iframe);
+    }
+  });
 
 </script>
