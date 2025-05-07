@@ -2,7 +2,23 @@ from yt_dlp import YoutubeDL
 import requests
 import os
 from urllib.parse import urlparse
+from yt_dlp.extractor.youtube import YoutubeIE
+from yt_dlp.extractor import gen_extractor_classes
+from yt_dlp import YoutubeDL
 
+def resolve_redirect(url):
+    try:
+        response = requests.head(url, allow_redirects=True)
+        return response.url
+    except:
+        return url  # fallback nếu lỗi
+
+# Patch để ép client=web cho riêng YouTube
+class PatchedYoutubeIE(YoutubeIE):
+    def _real_initialize(self):
+        super()._real_initialize()
+        self._player_client = 'web'  # Ép client thành "web" thật sự
+        
 # URL cookies từ R2
 COOKIE_URL_MAP = {
     "x.com": "https://r2.lam.io.vn/cookies/x_cookies.txt",
@@ -11,7 +27,8 @@ COOKIE_URL_MAP = {
     "facebook.com": "https://r2.lam.io.vn/cookies/facebook_cookies.txt",
     "tiktok.com": "https://r2.lam.io.vn/cookies/tiktok_cookies.txt",
     "pornhub.com": "https://r2.lam.io.vn/cookies/pornhub_cookies.txt",
-    "youtube.com": "https://r2.lam.io.vn/cookies/youtube_cookies.txt",
+    #"youtube.com": "https://r2.lam.io.vn/cookies/youtube_cookies.txt",
+    #"youtu.be": "https://r2.lam.io.vn/cookies/youtube_cookies.txt",
 }
 
 def download_from_url(url):
@@ -26,6 +43,38 @@ def download_from_url(url):
             if not _download_cookie_once(COOKIE_URL_MAP[domain], cookiefile):
                 return {'status': 'error', 'message': f"Failed to download cookies for {domain}"}
 
+        # Patch YouTube extractor nếu là YouTube
+        if domain in ['youtube.com', 'youtu.be']:
+            ydl_opts = {
+                'cookiefile': cookiefile,
+                'quiet': False,
+                'verbose': True,
+                'geo_bypass': True,
+                'geo_bypass_country': 'US',
+                'format': 'bv+ba/best',
+                'merge_output_format': 'mp4',
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                },
+                'extractor_classes': [
+                    PatchedYoutubeIE if e.IE_NAME == 'youtube' else e
+                    for e in gen_extractor_classes()
+                ]
+            }
+
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                media_list = []
+                if 'entries' in info:
+                    for entry in info['entries']:
+                        media_list.append(_extract_item(entry))
+                else:
+                    media_list.append(_extract_item(info))
+
+            return {'status': 'ok', 'media': media_list}
+            
         ydl_opts = {
             "quiet": True,
             "force_generic_extractor": False,
@@ -34,25 +83,25 @@ def download_from_url(url):
         }
 
         if domain == 'tiktok.com':
+            url = resolve_redirect(url)
+            print(f"[Tiktok] resolve redirect: {url}")
             ydl_opts.update({
                 'cookiefile': cookiefile,
+                'quiet': False,
+                'verbose': True,
+                'geo_bypass': True,
+                'geo_bypass_country': 'US',
+                'format': 'bv+ba/best',
+                'merge_output_format': 'mp4',
                 'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...',
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
                     'Referer': 'https://www.tiktok.com/',
                     'Origin': 'https://www.tiktok.com',
                     'Accept-Language': 'en-US,en;q=0.9'
                 }
             })
-
-        elif domain == 'youtube.com':
-            ydl_opts.update({
-                'cookiefile': cookiefile,
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                    'Accept-Language': 'en-US,en;q=0.9'
-                }
-            })
-        elif domain in ['x.com', 'twitter.com', 'instagram.com', 'facebook.com', 'pornhub.com']:
+        
+        elif domain in COOKIE_URL_MAP:
             ydl_opts.update({
                 'cookiefile': cookiefile
             })
@@ -92,14 +141,21 @@ def _download_cookie_once(remote_url, local_path):
 def _extract_item(info):
     source_url = info.get('webpage_url', '')
     formats = info.get('formats', [])
-    best_video = None
-    best_audio = None
+    
+     # Ưu tiên chất lượng cao nhất
+    video_streams = sorted(
+        [f for f in formats if f.get('vcodec') != 'none' and f.get('url')],
+        key=lambda x: x.get('height', 0),
+        reverse=True
+    )
+    audio_streams = sorted(
+        [f for f in formats if f.get('acodec') != 'none' and f.get('url')],
+        key=lambda x: x.get('abr', 0),
+        reverse=True
+    )
 
-    for fmt in formats:
-        if not best_video and fmt.get('vcodec') != 'none' and fmt.get('url'):
-            best_video = fmt
-        if not best_audio and fmt.get('acodec') != 'none' and fmt.get('url'):
-            best_audio = fmt
+    best_video = video_streams[0] if video_streams else None
+    best_audio = audio_streams[0] if audio_streams else None
 
     if best_video and best_audio:
         return {
@@ -114,7 +170,7 @@ def _extract_item(info):
 
     return {
         'title': info.get('title'),
-        'url': info.get('url'),
+        'video_url': info.get('url'),
         'thumbnail': info.get('thumbnail'),
         'ext': info.get('ext'),
         'webpage_url': source_url,
