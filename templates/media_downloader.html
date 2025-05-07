@@ -24,12 +24,12 @@ async function downloadMedia() {
     for (const item of data.media) {
       const card = document.createElement('div');
       card.style = 'border:1px solid #ccc;padding:10px;border-radius:8px;background:#fafafa';
-      card.innerHTML = `<p><strong>${item.title || 'Media'}</strong></p>`;
       
       const isTikTok = item.webpage_url && item.webpage_url.includes('tiktok.com');
       const filename = (item.title || 'media').replace(/[^\w\d_-]+/g, '_') + '.mp4';
 
       if (isTikTok) {
+        card.innerHTML = '';
         const match = item.webpage_url.match(/video\/(\d+)/);
         const videoId = match ? match[1] : null;
 
@@ -52,6 +52,7 @@ async function downloadMedia() {
         }
 
       } else if (item.video_url && item.audio_url) {
+        card.innerHTML = `<p><strong>${item.title || 'Media'}</strong></p>`;
         const vid = document.createElement('video');
         let needsProxy = ['pornhub.com', 'phncdn.com'].some(domain =>
           item.video_url.includes(domain)
