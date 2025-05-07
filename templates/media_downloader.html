@@ -30,13 +30,17 @@ async function downloadMedia() {
       const filename = (item.title || 'media').replace(/[^\w\d_-]+/g, '_') + '.mp4';
 
       if (isTikTok) {
-        
-        if (item.video_url) {
-          card.innerHTML += `
-            <video src="${item.video_url}" controls style="width:100%;margin-top:8px;border-radius:8px;" playsinline></video>`;
-          card.innerHTML += `<a href="${item.video_url}" download="${filename}" target="_blank" style="display:inline-block;margin-top:10px;color:#007BFF;">Download Video</a>`;
+        const match = item.webpage_url.match(/video\/(\d+)/);
+        const videoId = match ? match[1] : null;
+
+        if (videoId) {
+          card.innerHTML += `<iframe src="https://www.tiktok.com/embed/v2/${videoId}" allowfullscreen></iframe>`;
         } else {
           card.innerHTML += `<p style="color:red;">Unable to extract TikTok video ID.</p>`;
+        }
+
+        if (item.video_url) {
+          card.innerHTML += `<a href="${item.video_url}" download="${filename}" target="_blank" style="display:inline-block;margin-top:10px;color:#007BFF;">Download Video</a>`;
         }
 
       } else if (item.video_url && item.audio_url) {
