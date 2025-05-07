@@ -28,7 +28,7 @@ async function downloadMedia() {
 
       if (item.video_url && item.audio_url) {
         const vid = document.createElement('video');
-        let needsProxy = ['pornhub.com', 'phncdn.com'].some(domain =>
+        let needsProxy = ['pornhub.com', 'phncdn.com', 'tiktok.com'].some(domain =>
           item.video_url.includes(domain)
         );
         vid.src = needsProxy
