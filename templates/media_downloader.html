@@ -25,10 +25,30 @@ async function downloadMedia() {
       const card = document.createElement('div');
       card.style = 'border:1px solid #ccc;padding:10px;border-radius:8px;background:#fafafa';
       card.innerHTML = `<p><strong>${item.title || 'Media'}</strong></p>`;
+      
+      const isTikTok = item.webpage_url && item.webpage_url.includes('tiktok.com');
+      const filename = (item.title || 'media').replace(/[^\w\d_-]+/g, '_') + '.mp4';
 
-      if (item.video_url && item.audio_url) {
+      if (isTikTok) {
+        const match = item.webpage_url.match(/video\/(\d+)/);
+        const videoId = match ? match[1] : null;
+
+        if (videoId) {
+          card.innerHTML += `
+            <iframe src="https://www.tiktok.com/embed/v2/${videoId}"
+                    width="100%" height="480" 
+                    allowfullscreen allow="autoplay" style="margin-top:8px;"></iframe>`;
+        } else {
+          card.innerHTML += `<p style="color:red;">Unable to extract TikTok video ID.</p>`;
+        }
+
+        if (item.video_url) {
+          card.innerHTML += `<a href="${item.video_url}" download="${filename}" target="_blank" style="display:inline-block;margin-top:10px;color:#007BFF;">Download Video</a>`;
+        }
+
+      } else if (item.video_url && item.audio_url) {
         const vid = document.createElement('video');
-        let needsProxy = ['pornhub.com', 'phncdn.com', 'tiktok.com'].some(domain =>
+        let needsProxy = ['pornhub.com', 'phncdn.com'].some(domain =>
           item.video_url.includes(domain)
         );
         vid.src = needsProxy
