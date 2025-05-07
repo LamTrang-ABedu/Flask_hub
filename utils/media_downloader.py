@@ -46,7 +46,7 @@ def download_from_url(url):
         # Patch YouTube extractor nếu là YouTube
         if domain in ['youtube.com', 'youtu.be']:
             ydl_opts = {
-                'cookiefile': cookiefile,
+                # 'cookiefile': cookiefile,
                 'quiet': False,
                 'verbose': True,
                 'geo_bypass': True,
@@ -83,14 +83,14 @@ def download_from_url(url):
         }
 
         if domain == 'tiktok.com':
+            print(f"[Tiktok] ydl_opts.update for {domain}...")
+            # Resolve redirect
             url = resolve_redirect(url)
             print(f"[Tiktok] resolve redirect: {url}")
             ydl_opts.update({
                 'cookiefile': cookiefile,
                 'quiet': False,
                 'verbose': True,
-                'geo_bypass': True,
-                'geo_bypass_country': 'US',
                 'format': 'bv+ba/best',
                 'merge_output_format': 'mp4',
                 'http_headers': {
@@ -141,18 +141,27 @@ def _download_cookie_once(remote_url, local_path):
 def _extract_item(info):
     source_url = info.get('webpage_url', '')
     formats = info.get('formats', [])
-    
-     # Ưu tiên chất lượng cao nhất
+
+    # Lọc video có height rõ ràng
     video_streams = sorted(
-        [f for f in formats if f.get('vcodec') != 'none' and f.get('url')],
-        key=lambda x: x.get('height', 0),
+        [f for f in formats if f.get('vcodec') != 'none' and f.get('url') and f.get('height') is not None],
+        key=lambda x: x['height'],
         reverse=True
     )
+
+    # Nếu không có height, fallback mềm
+    if not video_streams:
+        video_streams = [f for f in formats if f.get('vcodec') != 'none' and f.get('url')]
+
+    # Lọc audio có abr rõ ràng
     audio_streams = sorted(
-        [f for f in formats if f.get('acodec') != 'none' and f.get('url')],
-        key=lambda x: x.get('abr', 0),
+        [f for f in formats if f.get('acodec') != 'none' and f.get('url') and f.get('abr') is not None],
+        key=lambda x: x['abr'],
         reverse=True
     )
+
+    if not audio_streams:
+        audio_streams = [f for f in formats if f.get('acodec') != 'none' and f.get('url')]
 
     best_video = video_streams[0] if video_streams else None
     best_audio = audio_streams[0] if audio_streams else None
@@ -168,6 +177,7 @@ def _extract_item(info):
             'needs_merge': True
         }
 
+    # fallback cuối nếu không tách được stream
     return {
         'title': info.get('title'),
         'video_url': info.get('url'),
