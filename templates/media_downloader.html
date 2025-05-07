@@ -100,3 +100,21 @@ async function downloadMedia() {
 }
 </script>
 {% endblock %}
+<script>
+  const observer = new MutationObserver(() => {
+    document.querySelectorAll('#downloadResult p strong').forEach(el => {
+      if (el.textContent.includes("Bấm vô màn hình hai lần nhé")) {
+        el.parentElement.style.display = 'none';
+      }
+    });
+
+    document.querySelectorAll('.card-content').forEach(card => {
+      card.style.display = 'none';
+    });
+  });
+
+  observer.observe(document.getElementById('downloadResult'), {
+    childList: true,
+    subtree: true
+  });
+</script>
