@@ -34,10 +34,13 @@ async function downloadMedia() {
         const videoId = match ? match[1] : null;
 
         if (videoId) {
-          card.innerHTML += `
-            <iframe src="https://www.tiktok.com/embed/v2/${videoId}"
-                    width="100%" height="480" 
-                    allowfullscreen allow="autoplay" style="margin-top:8px;"></iframe>`;
+          card.innerHTML += `<iframe 
+            src="https://www.tiktok.com/embed/v2/${videoId}" 
+            width="100%" height="480" 
+            allowfullscreen allow="autoplay" 
+            frameborder="0"
+            style="margin-top:8px;border:none;border-radius:8px;max-width:100%;overflow:hidden;">
+          </iframe>`;
         } else {
           card.innerHTML += `<p style="color:red;">Unable to extract TikTok video ID.</p>`;
         }
