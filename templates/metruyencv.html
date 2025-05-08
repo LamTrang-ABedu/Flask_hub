@@ -1,0 +1,139 @@
+{% extends 'index.html' %}
+{% block title %}Thư viện sách HopeHub{% endblock %}
+{% block content %}
+<div class="pt-4">
+  <div id="filter" class="px-4 mb-4 flex flex-wrap items-center gap-2">
+    <input id="filterInput" type="text" placeholder="Lọc theo tên truyện..." class="w-full sm:w-auto flex-1 border px-3 py-2 rounded shadow-sm" oninput="filterBooks()">
+    <button onclick="resetFilter()" class="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm">Reset</button>
+  </div>
+  <div id="book-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 px-4"></div>
+  <div id="loading-spinner" class="text-center my-6">
+    <svg class="animate-spin h-6 w-6 text-blue-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+    </svg>
+  </div>
+
+  <div id="reader" class="hidden">
+    <div id="sp-nav" class="sticky top-0 z-50 bg-white px-4 py-2 hidden items-center justify-between shadow md:hidden">
+      <button onclick="prevChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">←</button>
+      <select id="chapterSelect" onchange="jumpChapter()" class="px-2 py-1 border rounded text-sm"></select>
+      <button onclick="nextChapter()" class="px-2 py-1 bg-gray-200 rounded text-sm">→</button>
+    </div>
+    <div class="flex h-screen">
+      <div class="flex-1 overflow-auto">
+        <div id="chapter-content" class="bg-white text-black px-6 py-4 text-[17px] leading-relaxed"></div>
+        <div id="tts-controls" class="sticky bottom-0 bg-white border-t p-4 flex flex-wrap gap-2 items-center justify-center">
+          <button onclick="rewindTTS()" class="bg-gray-200 rounded px-3 py-1">⏪ 30s</button>
+          <button onclick="toggleTTSPlayPause(this)" class="bg-blue-600 text-white rounded px-4 py-1">▶️ Play</button>
+          <button onclick="forwardTTS()" class="bg-gray-200 rounded px-3 py-1">30s ⏩</button>
+          <select id="ttsSpeed" onchange="updateTTSSpeed()" class="border rounded px-2 py-1 text-sm">
+            <option value="0.8">Chậm</option>
+            <option value="1" selected>Bình thường</option>
+            <option value="1.2">Nhanh</option>
+            <option value="1.5">Rất nhanh</option>
+          </select>
+          <input id="ttsTimer" type="number" placeholder="Hẹn phút" class="w-20 px-2 py-1 border rounded text-sm" min="1">
+          <button onclick="startTTSTimer()" class="bg-yellow-400 px-3 py-1 rounded">⏱</button>
+          <button onclick="downloadTTS()" class="bg-green-500 text-white px-3 py-1 rounded">💾</button>
+        </div>
+      </div>
+      <div class="w-[300px] bg-gray-100 p-4 flex-col hidden md:flex">
+        <div class="flex justify-between items-center mb-4">
+          <button onclick="prevChapter()" class="px-2 py-1 bg-gray-300 rounded">← Chương trước</button>
+          <div id="chapter-title" class="font-bold text-center text-sm flex-1">Tiêu đề chương</div>
+          <button onclick="nextChapter()" class="px-2 py-1 bg-gray-300 rounded">Chương sau →</button>
+        </div>
+        <div class="overflow-y-auto border-t pt-2 flex-1">
+          <div id="chapter-list" class="space-y-1"></div>
+        </div>
+        <button onclick="backToList()" class="mt-4 px-3 py-1 bg-gray-300 rounded">← Quay lại danh sách</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let ttsAudio = null;
+let ttsTimer = null;
+let lastTTSBlob = null;
+
+function speakCurrentChapter(autoNext = true) {
+  const chap = currentBook.chapters[currentChapterIndex];
+  const text = chap.content;
+  const speed = parseFloat(document.getElementById('ttsSpeed').value);
+  fetch('https://voice-of-hope.onrender.com/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      voice: 'vi-VN-HoaiMyNeural',
+      provider: 'azure',
+      language: 'vi-VN'
+    })
+  })
+  .then(res => res.blob())
+  .then(blob => {
+    lastTTSBlob = blob;
+    const url = URL.createObjectURL(blob);
+    if (ttsAudio) ttsAudio.pause();
+    ttsAudio = new Audio(url);
+    ttsAudio.playbackRate = speed;
+    ttsAudio.play();
+    document.querySelector('#tts-controls button').innerText = '⏸ Pause';
+    if (autoNext) {
+      ttsAudio.onended = () => {
+        if (currentChapterIndex < currentBook.chapters.length - 1) {
+          currentChapterIndex++;
+          renderChapterList();
+          renderChapterContent();
+          updateChapterSelect();
+          speakCurrentChapter();
+        }
+      };
+    }
+  });
+}
+
+function toggleTTSPlayPause(btn) {
+  if (ttsAudio) {
+    if (ttsAudio.paused) {
+      ttsAudio.play();
+      btn.innerText = '⏸ Pause';
+    } else {
+      ttsAudio.pause();
+      btn.innerText = '▶️ Play';
+    }
+  } else {
+    speakCurrentChapter();
+  }
+}
+function rewindTTS() {
+  if (ttsAudio) ttsAudio.currentTime = Math.max(0, ttsAudio.currentTime - 30);
+}
+function forwardTTS() {
+  if (ttsAudio) ttsAudio.currentTime = Math.min(ttsAudio.duration, ttsAudio.currentTime + 30);
+}
+function updateTTSSpeed() {
+  const speed = parseFloat(document.getElementById('ttsSpeed').value);
+  if (ttsAudio) ttsAudio.playbackRate = speed;
+}
+function startTTSTimer() {
+  if (ttsTimer) clearTimeout(ttsTimer);
+  const minutes = parseInt(document.getElementById('ttsTimer').value);
+  if (!isNaN(minutes) && minutes > 0) {
+    ttsTimer = setTimeout(() => {
+      if (ttsAudio) ttsAudio.pause();
+    }, minutes * 60000);
+  }
+}
+function downloadTTS() {
+  if (lastTTSBlob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(lastTTSBlob);
+    a.download = 'chapter.mp3';
+    a.click();
+  }
+}
+</script>
+{% endblock %}
