@@ -160,7 +160,7 @@ async function speakText() {
   }
 }
 function estimateTimingsBySentence(text, duration) {
-  const sentences = text.match(/[^.!?]+[.!?\\s]*/g) || [text];
+  const sentences = text.match(/[^.!?;,:“”\"\'\\(\\)\\[\\]—–]+[.!?;,:“”\"\'\\(\\)\\[\\]—–\\s]*/g) || [text];
   const total = sentences.join('').length;
   let acc = 0;
   return sentences.map(s => {
@@ -232,36 +232,32 @@ function downloadAudio() {
   }
 }
 
-function highlightWithTimestamps(audio, timings) {
-  const display = document.getElementById("textDisplay");
-  const words = timings.map(w => w.word);
-  let currentIndex = -1;
+function highlightBySentence(audio, timings) {
+  const textarea = document.getElementById("ttsInput");
 
   const render = () => {
     const t = audio.currentTime;
-    const idx = timings.findIndex((w) => t >= w.start && t < w.end);
+    const idx = timings.findIndex((w, i) => t >= w.start && t < w.end);
+    if (idx !== -1) {
+      const fullText = textarea.value;
+      const sentences = fullText.match(/[^,!?]+[,!?\\s]*/g) || [fullText];
 
-    if (idx !== -1 && idx !== currentIndex) {
-      const html = words.map((w, i) =>
-        i === idx ? `<mark>${w}</mark>` : w
-      ).join(" ");
-      display.innerHTML = html;
-      currentIndex = idx;
+      let start = 0;
+      for (let i = 0; i < idx; i++) {
+        start += sentences[i].length;
+      }
+      const end = start + sentences[idx].length;
+
+      textarea.focus();
+      textarea.setSelectionRange(start, end);
     }
 
-    if (!audio.paused && !audio.ended) {
-      rafId = requestAnimationFrame(render);
-    }
+    if (!audio.paused && !audio.ended) requestAnimationFrame(render);
   };
 
-  audio.onplay = () => {
-    currentIndex = -1;
-    rafId = requestAnimationFrame(render);
-  };
-
-  audio.onpause = () => cancelAnimationFrame(rafId);
-  audio.onended = () => cancelAnimationFrame(rafId);
+  audio.onplay = () => requestAnimationFrame(render);
 }
+
 
 window.onload = loadVoices;
 </script>
